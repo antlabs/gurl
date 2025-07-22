@@ -38,6 +38,14 @@ func New(cfg config.Config, req *http.Request) *Benchmark {
 	}
 }
 
+// NewWithPulse 创建使用pulse库的基准测试实例（仅用于HTTP）
+func NewWithPulse(cfg config.Config, req *http.Request) interface{} {
+	if ShouldUsePulse(req) {
+		return NewPulseBenchmark(cfg, req)
+	}
+	return New(cfg, req)
+}
+
 // Run executes the benchmark
 func (b *Benchmark) Run(ctx context.Context) (*stats.Results, error) {
 	results := stats.NewResults()
