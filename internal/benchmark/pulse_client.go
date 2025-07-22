@@ -329,7 +329,7 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 		}
 	}
 
-	address := fmt.Sprintf("%s:%s", pb.target.Hostname(), port)
+	address := net.JoinHostPort(pb.target.Hostname(), port)
 
 	// 创建多个连接
 	for i := 0; i < pb.config.Connections; i++ {
@@ -367,8 +367,4 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 	return results, nil
 }
 
-// ShouldUsePulse 判断是否应该使用pulse库
-func ShouldUsePulse(req *http.Request) bool {
-	// 只对HTTP（非HTTPS）请求使用pulse
-	return req.URL.Scheme == "http"
-}
+

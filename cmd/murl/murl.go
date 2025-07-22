@@ -115,7 +115,7 @@ func runBenchmark(args *Args) error {
 		cancel()
 	}()
 
-	// 创建并运行基准测试
+	// 创建并运行基准测试（自动选择pulse或net/http方式）
 	bench := benchmark.New(cfg, req)
 
 	fmt.Printf("Running %s test @ %s\n", cfg.Duration, req.URL.String())
