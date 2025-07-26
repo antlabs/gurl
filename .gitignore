@@ -27,6 +27,7 @@ go.work.sum
 # env file
 .env
 /murl
+/build
 # Editor/IDE
 # .idea/
 # .vscode/

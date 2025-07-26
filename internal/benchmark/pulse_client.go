@@ -3,12 +3,11 @@ package benchmark
 import (
 	"context"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"strconv"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -28,11 +27,11 @@ type PulseBenchmark struct {
 
 // HTTPParseResult 存储HTTP解析结果
 type HTTPParseResult struct {
-	statusCode    int
-	contentLength int64
+	statusCode      int
+	contentLength   int64
 	headersComplete bool
 	messageComplete bool
-	body          []byte
+	body            []byte
 }
 
 // HTTPClientHandler 处理HTTP客户端连接的回调
@@ -43,7 +42,11 @@ type HTTPClientHandler struct {
 	results      *stats.Results
 	wg           *sync.WaitGroup
 	startTime    time.Time
-	responseData []byte
+	maxBodySize  int64
+
+	// 流式解析相关
+	parser      *httparser.Parser
+	parseResult *HTTPParseResult
 }
 
 // NewPulseBenchmark 创建新的pulse基准测试实例
@@ -57,48 +60,55 @@ func NewPulseBenchmark(cfg config.Config, req *http.Request) *PulseBenchmark {
 
 // OnOpen 连接建立时的回调
 func (h *HTTPClientHandler) OnOpen(c *pulse.Conn) {
-	// 构建HTTP请求
-	httpReq := h.buildHTTPRequest()
-	
+	// 初始化解析器
+	h.parseResult = &HTTPParseResult{}
+	h.parser = httparser.New(httparser.RESPONSE)
+	h.parser.SetUserData(h.parseResult)
+
 	// 记录请求开始时间
 	h.startTime = time.Now()
-	
+
+	// 构建HTTP请求
+	httpReq := h.buildHTTPRequest()
+
 	// 发送HTTP请求
-	_, err := c.Write([]byte(httpReq))
+	_, err := c.Write(httpReq)
 	if err != nil {
 		atomic.AddInt64(h.errorCount, 1)
 		h.results.AddError(err)
-		if h.wg != nil {
-			h.wg.Done()
-		}
+		h.wg.Done()
+		c.Close()
 		return
 	}
 }
 
 // OnData 接收到数据时的回调
 func (h *HTTPClientHandler) OnData(c *pulse.Conn, data []byte) {
-	// 累积响应数据
-	h.responseData = append(h.responseData, data...)
-	
+	// 流式解析HTTP响应
+	n, err := h.parser.Execute(&httpParserSetting, data)
+	if err != nil || n < 0 {
+		atomic.AddInt64(h.errorCount, 1)
+		h.results.AddError(fmt.Errorf("HTTP parse error: %v", err))
+		h.wg.Done()
+		c.Close()
+		return
+	}
+
 	// 检查是否收到完整的HTTP响应
-	if h.isCompleteResponse(h.responseData) {
+	if h.parseResult.messageComplete {
 		duration := time.Since(h.startTime)
 		atomic.AddInt64(h.requestCount, 1)
-		
-		// 解析HTTP响应
-		statusCode, contentLength := h.parseHTTPResponse(h.responseData)
-		
+
 		// 记录统计数据
 		h.results.AddLatency(duration)
-		h.results.AddStatusCode(statusCode)
-		h.results.AddBytes(contentLength)
-		
-		// 重置响应数据，准备下一个请求
-		h.responseData = nil
-		
-		if h.wg != nil {
-			h.wg.Done()
-		}
+		h.results.AddStatusCode(h.parseResult.statusCode)
+		h.results.AddBytes(h.parseResult.contentLength)
+
+		// 重置解析器状态，准备下次请求
+		h.parseResult = &HTTPParseResult{}
+		h.parser.SetUserData(h.parseResult)
+
+		h.wg.Done()
 	}
 }
 
@@ -109,190 +119,95 @@ func (h *HTTPClientHandler) OnClose(c *pulse.Conn, err error) {
 		h.results.AddError(err)
 	}
 
-	if h.wg != nil {
-		h.wg.Done()
-	}
+	h.wg.Done()
 }
 
 // buildHTTPRequest 构建HTTP请求字符串
-func (h *HTTPClientHandler) buildHTTPRequest() string {
-	var builder strings.Builder
-
-	// 请求行
-	builder.WriteString(fmt.Sprintf("%s %s HTTP/1.1\r\n",
-		h.request.Method, h.request.URL.RequestURI()))
-
-	// Host头部
-	builder.WriteString(fmt.Sprintf("Host: %s\r\n", h.request.Host))
-
-	// 其他头部
-	for name, values := range h.request.Header {
-		for _, value := range values {
-			builder.WriteString(fmt.Sprintf("%s: %s\r\n", name, value))
-		}
+func (h *HTTPClientHandler) buildHTTPRequest() []byte {
+	b, err := httputil.DumpRequest(h.request, true)
+	if err != nil {
+		return nil
 	}
-
-	// 如果有请求体，添加Content-Length
-	if h.request.Body != nil && h.request.ContentLength > 0 {
-		builder.WriteString(fmt.Sprintf("Content-Length: %d\r\n", h.request.ContentLength))
-	}
-
-	// 结束头部
-	builder.WriteString("\r\n")
-
-	// 添加请求体（如果有）
-	if h.request.Body != nil {
-		// 读取请求体内容
-		body, err := io.ReadAll(h.request.Body)
-		if err == nil && len(body) > 0 {
-			builder.Write(body)
-		}
-	}
-
-	return builder.String()
+	return b
 }
 
-// isCompleteResponse 检查是否收到完整的HTTP响应
-func (h *HTTPClientHandler) isCompleteResponse(data []byte) bool {
-	response := string(data)
-	
-	// 检查是否包含HTTP响应状态行
-	if !strings.Contains(response, "HTTP/") {
-		return false
-	}
-	
-	// 检查是否包含完整的头部（以\r\n\r\n结束）
-	headerEnd := strings.Index(response, "\r\n\r\n")
-	if headerEnd == -1 {
-		return false
-	}
-	
-	// 解析Content-Length
-	headerPart := response[:headerEnd]
-	contentLengthRegex := strings.Contains(strings.ToLower(headerPart), "content-length:")
-	if contentLengthRegex {
-		// 简化处理：如果有Content-Length，检查body长度
-		lines := strings.Split(headerPart, "\r\n")
-		for _, line := range lines {
-			if strings.HasPrefix(strings.ToLower(line), "content-length:") {
-				parts := strings.SplitN(line, ":", 2)
-				if len(parts) == 2 {
-					contentLength, err := strconv.Atoi(strings.TrimSpace(parts[1]))
-					if err == nil {
-						body := response[headerEnd+4:]
-						return len(body) >= contentLength
+// httpParserSetting 全局HTTP解析器设置，避免每次创建
+var httpParserSetting = httparser.Setting{
+	MessageBegin: func(p *httparser.Parser, _ int) {
+		// 解析器开始工作，重置结果
+		if result := p.GetUserData(); result != nil {
+			if r, ok := result.(*HTTPParseResult); ok {
+				r.statusCode = 0
+				r.contentLength = 0
+				r.headersComplete = false
+				r.messageComplete = false
+				r.body = r.body[:0] // 重用slice，避免重新分配
+			}
+		}
+	},
+	URL: func(_ *httparser.Parser, buf []byte, _ int) {
+		// URL数据（响应包中不需要）
+	},
+	Status: func(p *httparser.Parser, buf []byte, _ int) {
+		// 解析状态码
+		if result := p.GetUserData(); result != nil {
+			if r, ok := result.(*HTTPParseResult); ok {
+				if statusCode, err := strconv.Atoi(string(buf)); err == nil {
+					r.statusCode = statusCode
+				}
+			}
+		}
+	},
+	HeaderField: func(p *httparser.Parser, buf []byte, _ int) {
+		// HTTP header field
+
+		if string(buf) == "Content-Length" {
+			if result := p.GetUserData(); result != nil {
+				if r, ok := result.(*HTTPParseResult); ok {
+					if l, err := strconv.ParseInt(string(buf), 10, 64); err == nil {
+						r.contentLength = l
 					}
 				}
 			}
 		}
-	}
-	
-	// 如果是chunked编码，检查是否以0\r\n\r\n结束
-	if strings.Contains(strings.ToLower(headerPart), "transfer-encoding: chunked") {
-		return strings.HasSuffix(response, "0\r\n\r\n")
-	}
-	
-	// 默认认为已完整（简化处理）
-	return true
-}
 
-// parseHTTPResponse 使用httparser解析HTTP响应，返回状态码和内容长度
-func (h *HTTPClientHandler) parseHTTPResponse(data []byte) (int, int64) {
-	result := &HTTPParseResult{}
-	
-	// 创建httparser设置
-	setting := httparser.Setting{
-		MessageBegin: func(*httparser.Parser, int) {
-			// 解析器开始工作
-		},
-		URL: func(_ *httparser.Parser, buf []byte, _ int) {
-			// URL数据（响应包中不需要）
-		},
-		Status: func(_ *httparser.Parser, buf []byte, _ int) {
-			// 解析状态码
-			if statusCode, err := strconv.Atoi(string(buf)); err == nil {
-				result.statusCode = statusCode
+	},
+	HeaderValue: func(p *httparser.Parser, buf []byte, _ int) {
+		// HTTP header value
+	},
+	HeadersComplete: func(p *httparser.Parser, _ int) {
+		// HTTP header解析结束
+		if result := p.GetUserData(); result != nil {
+			if r, ok := result.(*HTTPParseResult); ok {
+				r.headersComplete = true
 			}
-		},
-		HeaderField: func(_ *httparser.Parser, buf []byte, _ int) {
-			// HTTP header field（可以用于调试）
-		},
-		HeaderValue: func(_ *httparser.Parser, buf []byte, _ int) {
-			// HTTP header value（可以用于调试）
-		},
-		HeadersComplete: func(_ *httparser.Parser, _ int) {
-			// HTTP header解析结束
-			result.headersComplete = true
-		},
-		Body: func(_ *httparser.Parser, buf []byte, _ int) {
-			// 累积响应体数据
-			result.body = append(result.body, buf...)
-		},
-		MessageComplete: func(_ *httparser.Parser, _ int) {
-			// 消息解析结束
-			result.messageComplete = true
-		},
-	}
-	
-	// 创建HTTP响应解析器
-	p := httparser.New(httparser.RESPONSE)
-	
-	// 执行解析
-	success, err := p.Execute(&setting, data)
-	if err != nil {
-		// 解析失败时使用原始方法作为后备
-		return h.parseHTTPResponseFallback(data)
-	}
-	
-	// 如果解析成功，计算内容长度
-	contentLength := int64(len(result.body))
-	if success > 0 && result.statusCode > 0 {
-		return result.statusCode, contentLength
-	}
-	
-	// 如果httparser解析不完整，使用后备方法
-	return h.parseHTTPResponseFallback(data)
-}
-
-// parseHTTPResponseFallback 原始HTTP解析方法作为后备
-func (h *HTTPClientHandler) parseHTTPResponseFallback(data []byte) (int, int64) {
-	response := string(data)
-	statusCode := 0
-	contentLength := int64(len(data))
-	
-	// 解析状态码
-	lines := strings.Split(response, "\r\n")
-	if len(lines) > 0 {
-		statusLine := lines[0]
-		parts := strings.Split(statusLine, " ")
-		if len(parts) >= 2 {
-			fmt.Sscanf(parts[1], "%d", &statusCode)
 		}
-	}
-	
-	// 计算实际内容长度（响应体部分）
-	headerEnd := strings.Index(response, "\r\n\r\n")
-	if headerEnd != -1 {
-		body := response[headerEnd+4:]
-		contentLength = int64(len(body))
-	}
-	
-	return statusCode, contentLength
-}
-
-// parseStatusCode 从HTTP响应中解析状态码（保持向后兼容）
-func (h *HTTPClientHandler) parseStatusCode(response string) int {
-	lines := strings.Split(response, "\r\n")
-	if len(lines) > 0 {
-		statusLine := lines[0]
-		parts := strings.Split(statusLine, " ")
-		if len(parts) >= 2 {
-			var statusCode int
-			fmt.Sscanf(parts[1], "%d", &statusCode)
-			return statusCode
+	},
+	Body: func(p *httparser.Parser, buf []byte, _ int) {
+		// 累积响应体数据并检查大小限制
+		if result := p.GetUserData(); result != nil {
+			if r, ok := result.(*HTTPParseResult); ok {
+				r.body = append(r.body, buf...)
+				// 检查body大小限制（例如1MB）
+				if int64(len(r.body)) > 1<<20 {
+					// 超过限制，记录错误并关闭连接
+					// 这里可以通过设置标志位在OnData中处理
+				}
+			}
 		}
-	}
-	return 0
+	},
+	MessageComplete: func(p *httparser.Parser, _ int) {
+		// 消息解析结束
+		if result := p.GetUserData(); result != nil {
+			if r, ok := result.(*HTTPParseResult); ok {
+				r.messageComplete = true
+				// 如果之前没有设置contentLength，则使用body长度
+				if r.contentLength == 0 {
+					r.contentLength = int64(len(r.body))
+				}
+			}
+		}
+	},
 }
 
 // Run 执行pulse基准测试
@@ -316,6 +231,7 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 			errorCount:   &errorCount,
 			results:      results,
 			wg:           &wg,
+			maxBodySize:  1 << 20, // 1MB限制
 		}),
 	)
 
@@ -366,5 +282,3 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 
 	return results, nil
 }
-
-
