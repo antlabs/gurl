@@ -20,12 +20,12 @@ func BuildRequest(cfg config.Config, targetURL *url.URL) (*http.Request, error) 
 	if cfg.Body != "" {
 		body = *strings.NewReader(cfg.Body)
 	}
-	
-	req, err := http.NewRequest(cfg.Method, targetURL.String(), &body)
+
+	req, err := http.NewRequest(strings.ToUpper(cfg.Method), targetURL.String(), &body)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// 添加headers
 	for _, header := range cfg.Headers {
 		parts := strings.SplitN(header, ":", 2)
@@ -35,7 +35,7 @@ func BuildRequest(cfg config.Config, targetURL *url.URL) (*http.Request, error) 
 			req.Header.Set(key, value)
 		}
 	}
-	
+
 	// 设置Content-Type
 	if cfg.ContentType != "" {
 		req.Header.Set("Content-Type", cfg.ContentType)
@@ -43,11 +43,11 @@ func BuildRequest(cfg config.Config, targetURL *url.URL) (*http.Request, error) 
 		// 如果有body但没有设置Content-Type，默认设置为application/json
 		req.Header.Set("Content-Type", "application/json")
 	}
-	
+
 	// 设置User-Agent
 	if req.Header.Get("User-Agent") == "" {
 		req.Header.Set("User-Agent", "murl/1.0")
 	}
-	
+
 	return req, nil
 }

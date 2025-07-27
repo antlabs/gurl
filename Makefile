@@ -77,6 +77,64 @@ bench:
 	@echo "Running benchmarks..."
 	$(GOTEST) -bench=. -benchmem ./...
 
+# Build and run test server (current platform)
+.PHONY: test-server
+test-server:
+	@echo "Building and starting test server..."
+	@mkdir -p $(BUILD_DIR)
+	$(GOBUILD) -o $(BUILD_DIR)/testserver ./cmd/testserver
+	./$(BUILD_DIR)/testserver
+
+# Build test server for multiple platforms
+.PHONY: test-server-all
+test-server-all: clean
+	@echo "Building test server for multiple platforms..."
+	@mkdir -p $(BUILD_DIR)
+	# Linux amd64
+	GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BUILD_DIR)/testserver-linux-amd64 ./cmd/testserver
+	# Linux arm64
+	GOOS=linux GOARCH=arm64 $(GOBUILD) -o $(BUILD_DIR)/testserver-linux-arm64 ./cmd/testserver
+	# macOS amd64
+	GOOS=darwin GOARCH=amd64 $(GOBUILD) -o $(BUILD_DIR)/testserver-darwin-amd64 ./cmd/testserver
+	# macOS arm64
+	GOOS=darwin GOARCH=arm64 $(GOBUILD) -o $(BUILD_DIR)/testserver-darwin-arm64 ./cmd/testserver
+	@echo "Cross-platform test server binaries built successfully!"
+	@ls -la $(BUILD_DIR)/testserver-*
+
+# Build and run test server for Linux (useful for testing in containers)
+.PHONY: test-server-linux
+test-server-linux:
+	@echo "Building test server for Linux..."
+	@mkdir -p $(BUILD_DIR)
+	GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BUILD_DIR)/testserver-linux-amd64 ./cmd/testserver
+	@echo "Linux test server built: $(BUILD_DIR)/testserver-linux-amd64"
+
+# Build and run test server for macOS
+.PHONY: test-server-darwin
+test-server-darwin:
+	@echo "Building test server for macOS..."
+	@mkdir -p $(BUILD_DIR)
+	GOOS=darwin GOARCH=amd64 $(GOBUILD) -o $(BUILD_DIR)/testserver-darwin-amd64 ./cmd/testserver
+	GOOS=darwin GOARCH=arm64 $(GOBUILD) -o $(BUILD_DIR)/testserver-darwin-arm64 ./cmd/testserver
+	@echo "macOS test server built: $(BUILD_DIR)/testserver-darwin-*"
+
+# Run unit tests only
+.PHONY: test-unit
+test-unit:
+	@echo "Running unit tests..."
+	$(GOTEST) -v ./internal/...
+
+# Run integration tests
+.PHONY: test-integration
+test-integration:
+	@echo "Running integration tests..."
+	$(GOTEST) -v ./test/...
+
+# Run all tests (unit + integration)
+.PHONY: test-all
+test-all: test-unit test-integration
+	@echo "All tests completed"
+
 # Format code
 .PHONY: fmt
 fmt:
@@ -155,6 +213,10 @@ help:
 	@echo "  test         - Run tests"
 	@echo "  test-coverage- Run tests with coverage report"
 	@echo "  bench        - Run benchmarks"
+	@echo "  test-server  - Build and run test server (current platform)"
+	@echo "  test-server-all - Build test server for multiple platforms"
+	@echo "  test-server-linux - Build test server for Linux"
+	@echo "  test-server-darwin - Build test server for macOS"
 	@echo "  fmt          - Format code"
 	@echo "  lint         - Lint code (requires golangci-lint)"
 	@echo "  tidy         - Tidy dependencies"
