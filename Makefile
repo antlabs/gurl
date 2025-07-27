@@ -35,9 +35,11 @@ build:
 
 # Build for multiple platforms
 .PHONY: build-all
-build-all: clean
+build-all:
 	@echo "Building for multiple platforms..."
 	@mkdir -p $(BUILD_DIR)
+	# Clean only murl binaries
+	rm -f $(BUILD_DIR)/$(BINARY_NAME)-*
 	# Linux amd64
 	GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 $(MAIN_PACKAGE)
 	# Linux arm64
@@ -87,9 +89,11 @@ test-server:
 
 # Build test server for multiple platforms
 .PHONY: test-server-all
-test-server-all: clean
+test-server-all:
 	@echo "Building test server for multiple platforms..."
 	@mkdir -p $(BUILD_DIR)
+	# Clean only testserver binaries
+	rm -f $(BUILD_DIR)/testserver-*
 	# Linux amd64
 	GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BUILD_DIR)/testserver-linux-amd64 ./cmd/testserver
 	# Linux arm64

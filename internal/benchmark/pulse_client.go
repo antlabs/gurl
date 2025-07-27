@@ -16,6 +16,7 @@ import (
 	"github.com/antlabs/murl/internal/config"
 	"github.com/antlabs/murl/internal/stats"
 	"github.com/antlabs/pulse"
+	"github.com/antlabs/pulse/core"
 )
 
 // PulseBenchmark 使用pulse库进行HTTP压测的实现
@@ -111,7 +112,6 @@ func (h *HTTPClientHandler) OnData(c *pulse.Conn, data []byte) {
 	if err != nil || n < 0 {
 		atomic.AddInt64(h.errorCount, 1)
 		session.results.AddError(fmt.Errorf("HTTP parse error: %v", err))
-		session.wg.Done()
 		c.Close()
 		return
 	}
@@ -131,7 +131,15 @@ func (h *HTTPClientHandler) OnData(c *pulse.Conn, data []byte) {
 		session.parser.SetUserData(session.parseResult)
 		session.startTime = time.Now()
 
-		session.wg.Done()
+		// 立即发送下一个请求（持续压测）
+		httpReq := h.buildHTTPRequest()
+		_, writeErr := c.Write(httpReq)
+		if writeErr != nil {
+			atomic.AddInt64(h.errorCount, 1)
+			session.results.AddError(writeErr)
+			c.Close()
+			return
+		}
 	}
 }
 
@@ -147,6 +155,7 @@ func (h *HTTPClientHandler) OnClose(c *pulse.Conn, err error) {
 		session.results.AddError(err)
 	}
 
+	// 只有在连接关闭时才调用 wg.Done()
 	session.wg.Done()
 }
 
@@ -252,21 +261,27 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 
 	var requestCount int64
 	var errorCount int64
-	var wg sync.WaitGroup
+	// var wg sync.WaitGroup
 
 	// 创建pulse客户端事件循环
 	loop := pulse.NewClientEventLoop(
 		testCtx,
+		pulse.WithTaskType(pulse.TaskTypeInEventLoop), // 在事件循环中处理任务
+		pulse.WithTriggerType(core.TriggerTypeLevel),
 		pulse.WithCallback(&HTTPClientHandler{
 			request:      pb.request,
 			requestCount: &requestCount,
 			errorCount:   &errorCount,
 			results:      results,
-			wg:           &wg,
-			maxBodySize:  1 << 20, // 1MB限制
+			// wg:           &wg,
+			maxBodySize: 1 << 20, // 1MB限制
 		}),
 	)
 
+	// 启动事件循环
+	go func() {
+		loop.Serve()
+	}()
 	// 建立连接
 	port := pb.target.Port()
 	if port == "" {
@@ -280,32 +295,27 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 	address := net.JoinHostPort(pb.target.Hostname(), port)
 
 	// 创建多个连接
+	fmt.Printf("Creating connections...%s\n", address)
 	for i := 0; i < pb.config.Connections; i++ {
 		conn, err := net.Dial("tcp", address)
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to %s: %w", address, err)
 		}
 
-		wg.Add(1)
-		loop.RegisterConn(conn)
+		err = loop.RegisterConn(conn)
+		if err != nil {
+			return nil, fmt.Errorf("failed to register connection: %w", err)
+		}
+		// wg.Add(1)
 	}
 
-	// 启动事件循环
-	go func() {
-		loop.Serve()
-	}()
+	// 等待测试时间结束
+	<-testCtx.Done()
 
-	// 等待所有请求完成或超时
-	done := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-	case <-testCtx.Done():
-	}
+	fmt.Println("testCtx.Done()")
+	// 等待所有连接关闭（通过context取消触发）
+	// wg.Wait()
+	fmt.Println("wg.Wait()")
 
 	// 计算最终结果
 	results.TotalRequests = atomic.LoadInt64(&requestCount)

@@ -47,7 +47,7 @@ func shouldUsePulseImpl(req *http.Request) bool {
 	// 这里可以根据具体需求调整判断逻辑
 	// 例如：特定的URL模式、请求方法、头部等
 	
-	// 目前简单地对所有HTTP/HTTPS请求使用pulse
+	// 重新启用pulse实现进行测试
 	scheme := req.URL.Scheme
 	return scheme == "http" || scheme == "https"
 }
