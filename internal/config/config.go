@@ -26,6 +26,9 @@ type Config struct {
 	// Output options
 	Verbose      bool // Verbose output
 	PrintLatency bool // Print latency statistics
+	
+	// Engine options
+	UseNetHTTP   bool // Force use standard library net/http instead of pulse
 }
 
 // Validate checks if the configuration is valid

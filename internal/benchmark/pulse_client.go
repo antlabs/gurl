@@ -1,6 +1,7 @@
 package benchmark
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net"
@@ -19,6 +20,8 @@ import (
 	"github.com/antlabs/pulse/core"
 )
 
+var bytesContentLength = []byte("Content-Length")
+
 // PulseBenchmark 使用pulse库进行HTTP压测的实现
 type PulseBenchmark struct {
 	config  config.Config
@@ -34,6 +37,14 @@ type HTTPParseResult struct {
 	messageComplete  bool
 	hasContentLength bool
 	// body             []byte
+}
+
+func (h *HTTPParseResult) Reset() {
+	h.statusCode = 0
+	h.contentLength = 0
+	h.headersComplete = false
+	h.messageComplete = false
+	h.hasContentLength = false
 }
 
 // ConnSession 每个连接的会话状态
@@ -127,7 +138,7 @@ func (h *HTTPClientHandler) OnData(c *pulse.Conn, data []byte) {
 		session.results.AddBytes(session.parseResult.contentLength)
 
 		// 重置解析器状态，准备下次请求
-		session.parseResult = &HTTPParseResult{}
+		session.parseResult.Reset()
 		session.parser.SetUserData(session.parseResult)
 		session.startTime = time.Now()
 
@@ -184,21 +195,12 @@ var httpParserSetting = httparser.Setting{
 		}
 	},
 	URL: func(_ *httparser.Parser, buf []byte, _ int) {
-		// URL数据（响应包中不需要）
 	},
 	Status: func(p *httparser.Parser, buf []byte, _ int) {
-		// 解析状态码
-		if result := p.GetUserData(); result != nil {
-			if r, ok := result.(*HTTPParseResult); ok {
-				if statusCode, err := strconv.Atoi(string(buf)); err == nil {
-					r.statusCode = statusCode
-				}
-			}
-		}
 	},
 	HeaderField: func(p *httparser.Parser, buf []byte, _ int) {
 		// HTTP header field
-		if string(buf) == "Content-Length" {
+		if bytes.Equal(buf, bytesContentLength) {
 			if result := p.GetUserData(); result != nil {
 				if r, ok := result.(*HTTPParseResult); ok {
 					r.hasContentLength = true
@@ -245,6 +247,7 @@ var httpParserSetting = httparser.Setting{
 		// 消息解析结束
 		if result := p.GetUserData(); result != nil {
 			if r, ok := result.(*HTTPParseResult); ok {
+				r.statusCode = int(p.StatusCode)
 				r.messageComplete = true
 			}
 		}

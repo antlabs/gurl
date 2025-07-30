@@ -17,8 +17,11 @@ type Benchmark struct {
 func New(cfg config.Config, req *http.Request) *Benchmark {
 	var runner Runner
 	
-	// 根据URL和请求特性选择合适的实现
-	if ShouldUsePulse(req) {
+	// 如果用户强制使用标准库，则使用NetHTTP实现
+	if cfg.UseNetHTTP {
+		runner = NewNetHTTPBenchmark(cfg, req)
+	} else if ShouldUsePulse(req) {
+		// 根据URL和请求特性选择合适的实现
 		runner = NewPulseBenchmark(cfg, req)
 	} else {
 		runner = NewNetHTTPBenchmark(cfg, req)

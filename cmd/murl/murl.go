@@ -39,6 +39,9 @@ type Args struct {
 	Verbose      bool `clop:"-v;--verbose" usage:"Verbose output"`
 	PrintLatency bool `clop:"--latency" usage:"Print latency statistics"`
 
+	// 引擎选项
+	UseNetHTTP   bool `clop:"--use-nethttp" usage:"Force use standard library net/http instead of pulse"`
+
 	// 位置参数
 	URL string `clop:"args=url" usage:"Target URL for benchmarking"`
 }
@@ -58,6 +61,7 @@ func (a *Args) toConfig() config.Config {
 		ContentType:  a.ContentType,
 		Verbose:      a.Verbose,
 		PrintLatency: a.PrintLatency,
+		UseNetHTTP:   a.UseNetHTTP,
 	}
 }
 
