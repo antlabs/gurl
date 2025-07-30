@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/antlabs/gurl/internal/batch"
 	"github.com/antlabs/gurl/internal/benchmark"
 	"github.com/antlabs/gurl/internal/config"
 	"github.com/antlabs/gurl/internal/parser"
@@ -41,6 +42,12 @@ type Args struct {
 
 	// 引擎选项
 	UseNetHTTP bool `clop:"--use-nethttp" usage:"Force use standard library net/http instead of pulse"`
+
+	// 批量测试选项
+	BatchConfig     string `clop:"--batch-config" usage:"Path to batch test configuration file (YAML/JSON)"`
+	BatchConcurrency int   `clop:"--batch-concurrency" usage:"Maximum concurrent batch tests" default:"3"`
+	BatchSequential bool   `clop:"--batch-sequential" usage:"Run batch tests sequentially instead of concurrently"`
+	BatchReport     string `clop:"--batch-report" usage:"Output format for batch report (text|csv|json)" default:"text"`
 
 	// 位置参数
 	URL string `clop:"args=url" usage:"Target URL for benchmarking"`
@@ -136,11 +143,81 @@ func runBenchmark(args *Args) error {
 	return nil
 }
 
+// runBatchTest 执行批量测试
+func runBatchTest(args *Args) error {
+	// 加载批量配置文件
+	batchConfig, err := config.LoadBatchConfig(args.BatchConfig)
+	if err != nil {
+		return fmt.Errorf("failed to load batch config: %w", err)
+	}
+
+	// 创建默认配置
+	defaults := args.toConfig()
+
+	// 创建批量执行器
+	executor := batch.NewExecutor(args.BatchConcurrency, args.Verbose)
+
+	// 创建上下文
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// 处理信号
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigChan
+		fmt.Println("\nReceived interrupt signal, stopping batch tests...")
+		cancel()
+	}()
+
+	// 执行批量测试
+	var result *batch.BatchResult
+	if args.BatchSequential {
+		result, err = executor.ExecuteSequential(ctx, batchConfig, &defaults)
+	} else {
+		result, err = executor.Execute(ctx, batchConfig, &defaults)
+	}
+
+	if err != nil {
+		return fmt.Errorf("batch test failed: %w", err)
+	}
+
+	// 生成报告
+	reporter := batch.NewReporter(args.Verbose)
+
+	// 根据输出格式生成报告
+	switch args.BatchReport {
+	case "csv":
+		fmt.Print(reporter.GenerateCSVReport(result))
+	case "json":
+		fmt.Print(reporter.GenerateJSONReport(result))
+	default: // "text"
+		fmt.Print(reporter.GenerateReport(result))
+	}
+
+	// 打印简要摘要
+	reporter.PrintSummary(result)
+
+	return nil
+}
+
 // Execute 执行命令行程序
 func main() {
 	args := &Args{}
 
 	clop.Bind(args)
 
-	runBenchmark(args)
+	// 检查是否为批量测试模式
+	if args.BatchConfig != "" {
+		if err := runBatchTest(args); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+	} else {
+		// 单个测试模式
+		if err := runBenchmark(args); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+	}
 }

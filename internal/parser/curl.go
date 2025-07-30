@@ -46,7 +46,7 @@ func BuildRequest(cfg config.Config, targetURL *url.URL) (*http.Request, error) 
 
 	// 设置User-Agent
 	if req.Header.Get("User-Agent") == "" {
-		req.Header.Set("User-Agent", "gurl/1.0")
+		req.Header.Set("User-Agent", "gurl/v0.0.1")
 	}
 
 	return req, nil
