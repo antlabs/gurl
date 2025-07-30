@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/antlabs/murl/internal/testserver"
+	"github.com/antlabs/gurl/internal/testserver"
 )
 
 func main() {

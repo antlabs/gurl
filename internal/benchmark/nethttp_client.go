@@ -8,8 +8,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/antlabs/murl/internal/config"
-	"github.com/antlabs/murl/internal/stats"
+	"github.com/antlabs/gurl/internal/config"
+	"github.com/antlabs/gurl/internal/stats"
 )
 
 // Runner 定义基准测试运行器接口
@@ -43,12 +43,10 @@ func NewNetHTTPBenchmark(cfg config.Config, req *http.Request) *NetHTTPBenchmark
 	}
 }
 
-
-
 // Run executes the net/http benchmark
 func (b *NetHTTPBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 	results := stats.NewResults()
-	
+
 	// 创建上下文，在指定时间后取消
 	testCtx, cancel := context.WithTimeout(ctx, b.config.Duration)
 	defer cancel()
@@ -73,7 +71,7 @@ func (b *NetHTTPBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 	results.TotalRequests = atomic.LoadInt64(&requestCount)
 	results.TotalErrors = atomic.LoadInt64(&errorCount)
 	results.Duration = b.config.Duration
-	
+
 	return results, nil
 }
 
@@ -85,7 +83,7 @@ func (b *NetHTTPBenchmark) runWorker(ctx context.Context, threadID int, requestC
 	}
 
 	var wg sync.WaitGroup
-	
+
 	// 为每个连接启动一个goroutine
 	for i := 0; i < connectionsPerThread; i++ {
 		wg.Add(1)
@@ -94,14 +92,14 @@ func (b *NetHTTPBenchmark) runWorker(ctx context.Context, threadID int, requestC
 			b.runConnection(ctx, requestCount, errorCount, results)
 		}()
 	}
-	
+
 	wg.Wait()
 }
 
 // runConnection handles a single connection's requests
 func (b *NetHTTPBenchmark) runConnection(ctx context.Context, requestCount, errorCount *int64, results *stats.Results) {
 	rateLimiter := b.createRateLimiter()
-	
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -115,14 +113,14 @@ func (b *NetHTTPBenchmark) runConnection(ctx context.Context, requestCount, erro
 					return
 				}
 			}
-			
+
 			// 执行请求
 			start := time.Now()
 			resp, err := b.client.Do(b.request.Clone(ctx))
 			duration := time.Since(start)
-			
+
 			atomic.AddInt64(requestCount, 1)
-			
+
 			if err != nil {
 				atomic.AddInt64(errorCount, 1)
 				results.AddError(err)
@@ -130,7 +128,7 @@ func (b *NetHTTPBenchmark) runConnection(ctx context.Context, requestCount, erro
 				// 读取并丢弃响应体数据，计算字节数
 				bytesRead, _ := io.Copy(io.Discard, resp.Body)
 				resp.Body.Close()
-				
+
 				results.AddLatency(duration)
 				results.AddStatusCode(resp.StatusCode)
 				results.AddBytes(bytesRead)
@@ -144,13 +142,13 @@ func (b *NetHTTPBenchmark) createRateLimiter() <-chan time.Time {
 	if b.config.Rate <= 0 {
 		return nil
 	}
-	
+
 	// 计算每个连接的速率
 	ratePerConnection := b.config.Rate / b.config.Connections
 	if ratePerConnection <= 0 {
 		ratePerConnection = 1
 	}
-	
+
 	interval := time.Second / time.Duration(ratePerConnection)
 	return time.Tick(interval)
 }

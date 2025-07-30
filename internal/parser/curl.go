@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/antlabs/murl/internal/config"
+	"github.com/antlabs/gurl/internal/config"
 	"github.com/antlabs/pcurl"
 )
 
@@ -46,7 +46,7 @@ func BuildRequest(cfg config.Config, targetURL *url.URL) (*http.Request, error) 
 
 	// 设置User-Agent
 	if req.Header.Get("User-Agent") == "" {
-		req.Header.Set("User-Agent", "murl/1.0")
+		req.Header.Set("User-Agent", "gurl/1.0")
 	}
 
 	return req, nil

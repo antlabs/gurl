@@ -11,9 +11,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/antlabs/murl/internal/benchmark"
-	"github.com/antlabs/murl/internal/config"
-	"github.com/antlabs/murl/internal/parser"
+	"github.com/antlabs/gurl/internal/benchmark"
+	"github.com/antlabs/gurl/internal/config"
+	"github.com/antlabs/gurl/internal/parser"
 	"github.com/guonaihong/clop"
 )
 
@@ -40,7 +40,7 @@ type Args struct {
 	PrintLatency bool `clop:"--latency" usage:"Print latency statistics"`
 
 	// 引擎选项
-	UseNetHTTP   bool `clop:"--use-nethttp" usage:"Force use standard library net/http instead of pulse"`
+	UseNetHTTP bool `clop:"--use-nethttp" usage:"Force use standard library net/http instead of pulse"`
 
 	// 位置参数
 	URL string `clop:"args=url" usage:"Target URL for benchmarking"`

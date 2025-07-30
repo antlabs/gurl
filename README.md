@@ -1,6 +1,6 @@
-# murl
+# gurl
 
-**murl** = **m**odern + c**url** + wr**k**
+**gurl** = **m**odern + c**url** + wr**k**
 
 A modern HTTP benchmarking tool inspired by wrk, with the ability to parse curl commands for load testing.
 
@@ -16,15 +16,15 @@ A modern HTTP benchmarking tool inspired by wrk, with the ability to parse curl 
 ## Installation
 
 ```bash
-go install github.com/antlabs/murl@latest
+go install github.com/antlabs/gurl@latest
 ```
 
 Or build from source:
 
 ```bash
-git clone https://github.com/antlabs/murl.git
-cd murl
-go build -o murl
+git clone https://github.com/antlabs/gurl.git
+cd gurl
+go build -o gurl
 ```
 
 ## Usage
@@ -33,17 +33,17 @@ go build -o murl
 
 ```bash
 # Simple GET request
-murl -c 100 -d 30s http://example.com
+gurl -c 100 -d 30s http://example.com
 
 # POST request with custom headers
-murl -c 50 -d 10s -X POST -H "Content-Type: application/json" -d '{"key":"value"}' http://api.example.com
+gurl -c 50 -d 10s -X POST -H "Content-Type: application/json" -d '{"key":"value"}' http://api.example.com
 ```
 
 ### Parse Curl Commands
 
 ```bash
 # Parse a curl command and use it for benchmarking
-murl --parse-curl "curl -X POST -H 'Content-Type: application/json' -d '{\"name\":\"test\"}' http://api.example.com/users" -c 100 -d 30s
+gurl --parse-curl "curl -X POST -H 'Content-Type: application/json' -d '{\"name\":\"test\"}' http://api.example.com/users" -c 100 -d 30s
 ```
 
 ### Options
@@ -66,7 +66,7 @@ murl --parse-curl "curl -X POST -H 'Content-Type: application/json' -d '{\"name\
 ### Basic Load Test
 
 ```bash
-murl -c 100 -d 30s -t 4 http://example.com
+gurl -c 100 -d 30s -t 4 http://example.com
 ```
 
 Output:
@@ -84,14 +84,14 @@ Transfer/sec:     1.52MB
 ### Load Test with Curl Command
 
 ```bash
-murl --parse-curl "curl -X POST -H 'Authorization: Bearer token123' -H 'Content-Type: application/json' -d '{\"user\":\"test\"}' https://api.example.com/login" -c 50 -d 10s --latency
+gurl --parse-curl "curl -X POST -H 'Authorization: Bearer token123' -H 'Content-Type: application/json' -d '{\"user\":\"test\"}' https://api.example.com/login" -c 50 -d 10s --latency
 ```
 
 ### Rate Limited Test
 
 ```bash
 # Limit to 1000 requests per second
-murl -c 10 -d 60s -R 1000 http://example.com
+gurl -c 10 -d 60s -R 1000 http://example.com
 ```
 
 ## Output Format
@@ -107,7 +107,7 @@ The output format is similar to wrk:
 
 ## Performance
 
-murl is designed for high performance:
+gurl is designed for high performance:
 
 - Async I/O using custom pulse library
 - Efficient connection pooling

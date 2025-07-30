@@ -1,7 +1,7 @@
-# murl 开发计划
+# gurl 开发计划
 
 ## 项目概述
-murl 是一个类似 wrk 的高性能 HTTP 压测工具，支持 curl 命令解析和多种压测模式。本文档描述了项目的后续开发计划。
+gurl 是一个类似 wrk 的高性能 HTTP 压测工具，支持 curl 命令解析和多种压测模式。本文档描述了项目的后续开发计划。
 
 ## 开发路线图
 
@@ -61,7 +61,7 @@ tests/
 
 #### 配置文件格式示例
 ```yaml
-# murl-batch.yaml
+# gurl-batch.yaml
 version: "1.0"
 tests:
   - name: "用户登录API"
@@ -105,7 +105,7 @@ examples/
 #### 模板语法示例
 ```bash
 # 支持的模板变量
-murl -c 100 -d 30s --parse-curl 'curl https://api.example.com/user/{{.UserID}}/posts/{{.PostID}}'
+gurl -c 100 -d 30s --parse-curl 'curl https://api.example.com/user/{{.UserID}}/posts/{{.PostID}}'
 
 # 变量定义
 --var UserID=random:1-1000

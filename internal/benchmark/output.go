@@ -5,36 +5,36 @@ import (
 	"sort"
 	"time"
 
-	"github.com/antlabs/murl/internal/config"
-	"github.com/antlabs/murl/internal/stats"
+	"github.com/antlabs/gurl/internal/config"
+	"github.com/antlabs/gurl/internal/stats"
 )
 
 // PrintResults prints the benchmark results in wrk-like format
 func PrintResults(results *stats.Results, cfg config.Config) {
 	fmt.Printf("  Thread Stats   Avg      Stdev     Max   +/- Stdev\n")
-	
+
 	// 计算延迟统计
 	latencies := results.GetLatencies()
 	if len(latencies) > 0 {
 		sort.Slice(latencies, func(i, j int) bool {
 			return latencies[i] < latencies[j]
 		})
-		
+
 		avg := results.GetAverageLatency()
 		stdev := results.GetLatencyStdDev()
 		max := latencies[len(latencies)-1]
-		
-		fmt.Printf("    Latency   %8s %8s %8s %8.2f%%\n", 
+
+		fmt.Printf("    Latency   %8s %8s %8s %8.2f%%\n",
 			formatDuration(avg),
-			formatDuration(stdev), 
+			formatDuration(stdev),
 			formatDuration(max),
 			calculateStdDevPercentage(latencies, avg, stdev))
 	}
-	
+
 	// 计算QPS
 	qps := float64(results.TotalRequests) / results.Duration.Seconds()
 	fmt.Printf("    Req/Sec   %8.2f %8s %8s %8s\n", qps, "N/A", "N/A", "N/A")
-	
+
 	// 打印延迟分布
 	if cfg.PrintLatency && len(latencies) > 0 {
 		fmt.Printf("  Latency Distribution\n")
@@ -44,21 +44,21 @@ func PrintResults(results *stats.Results, cfg config.Config) {
 			fmt.Printf("     %2.0f%%   %s\n", p, formatDuration(latencies[idx]))
 		}
 	}
-	
+
 	// 打印总体统计
-	fmt.Printf("  %d requests in %s, %s read\n", 
-		results.TotalRequests, 
+	fmt.Printf("  %d requests in %s, %s read\n",
+		results.TotalRequests,
 		results.Duration,
 		formatBytes(results.GetTotalBytes()))
-	
+
 	if results.TotalErrors > 0 {
 		fmt.Printf("  Socket errors: connect %d, read %d, write %d, timeout %d\n",
 			results.GetConnectErrors(),
-			results.GetReadErrors(), 
+			results.GetReadErrors(),
 			results.GetWriteErrors(),
 			results.GetTimeoutErrors())
 	}
-	
+
 	// 打印状态码分布
 	statusCodes := results.GetStatusCodes()
 	if len(statusCodes) > 0 {
@@ -68,7 +68,7 @@ func PrintResults(results *stats.Results, cfg config.Config) {
 			fmt.Printf("    [%d] %d responses (%.1f%%)\n", code, count, percentage)
 		}
 	}
-	
+
 	fmt.Printf("Requests/sec: %8.2f\n", qps)
 	fmt.Printf("Transfer/sec: %8s\n", formatBytes(int64(float64(results.GetTotalBytes())/results.Duration.Seconds())))
 }
@@ -105,16 +105,16 @@ func calculateStdDevPercentage(latencies []time.Duration, avg, stdev time.Durati
 	if len(latencies) == 0 || stdev == 0 {
 		return 0
 	}
-	
+
 	lower := avg - stdev
 	upper := avg + stdev
 	count := 0
-	
+
 	for _, lat := range latencies {
 		if lat >= lower && lat <= upper {
 			count++
 		}
 	}
-	
+
 	return float64(count) / float64(len(latencies)) * 100.0
 }

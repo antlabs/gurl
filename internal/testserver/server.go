@@ -43,31 +43,31 @@ func NewTestServer(port int) *TestServer {
 // Start 启动测试服务器
 func (ts *TestServer) Start() error {
 	mux := http.NewServeMux()
-	
+
 	// 注册各种HTTP方法的处理器
 	mux.HandleFunc("/api/get", ts.handleGet)
 	mux.HandleFunc("/api/post", ts.handlePost)
 	mux.HandleFunc("/api/put", ts.handlePut)
 	mux.HandleFunc("/api/patch", ts.handlePatch)
 	mux.HandleFunc("/api/delete", ts.handleDelete)
-	
+
 	// 通用处理器，支持所有方法
 	mux.HandleFunc("/api/echo", ts.handleEcho)
-	
+
 	// 延迟测试端点
 	mux.HandleFunc("/api/delay", ts.handleDelay)
-	
+
 	// 状态码测试端点
 	mux.HandleFunc("/api/status/", ts.handleStatus)
-	
+
 	// 健康检查端点
 	mux.HandleFunc("/health", ts.handleHealth)
-	
+
 	ts.server = &http.Server{
 		Addr:    fmt.Sprintf(":%d", ts.port),
 		Handler: mux,
 	}
-	
+
 	log.Printf("测试服务器启动在端口 %d", ts.port)
 	return ts.server.ListenAndServe()
 }
@@ -91,7 +91,7 @@ func (ts *TestServer) handleGet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	
+
 	response := ResponseData{
 		Message: "GET request successful",
 		Request: ts.extractRequestInfo(r),
@@ -99,7 +99,7 @@ func (ts *TestServer) handleGet(w http.ResponseWriter, r *http.Request) {
 			"query_params": r.URL.Query(),
 		},
 	}
-	
+
 	ts.writeJSONResponse(w, response)
 }
 
@@ -109,22 +109,22 @@ func (ts *TestServer) handlePost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read body", http.StatusBadRequest)
 		return
 	}
-	
+
 	response := ResponseData{
 		Message: "POST request successful",
 		Request: ts.extractRequestInfo(r),
 		Data: map[string]interface{}{
-			"body_length": len(body),
+			"body_length":  len(body),
 			"content_type": r.Header.Get("Content-Type"),
 		},
 	}
-	
+
 	ts.writeJSONResponse(w, response)
 }
 
@@ -134,22 +134,22 @@ func (ts *TestServer) handlePut(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read body", http.StatusBadRequest)
 		return
 	}
-	
+
 	response := ResponseData{
 		Message: "PUT request successful",
 		Request: ts.extractRequestInfo(r),
 		Data: map[string]interface{}{
 			"body_length": len(body),
-			"updated": true,
+			"updated":     true,
 		},
 	}
-	
+
 	ts.writeJSONResponse(w, response)
 }
 
@@ -159,22 +159,22 @@ func (ts *TestServer) handlePatch(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read body", http.StatusBadRequest)
 		return
 	}
-	
+
 	response := ResponseData{
 		Message: "PATCH request successful",
 		Request: ts.extractRequestInfo(r),
 		Data: map[string]interface{}{
 			"body_length": len(body),
-			"patched": true,
+			"patched":     true,
 		},
 	}
-	
+
 	ts.writeJSONResponse(w, response)
 }
 
@@ -184,7 +184,7 @@ func (ts *TestServer) handleDelete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	
+
 	response := ResponseData{
 		Message: "DELETE request successful",
 		Request: ts.extractRequestInfo(r),
@@ -192,23 +192,23 @@ func (ts *TestServer) handleDelete(w http.ResponseWriter, r *http.Request) {
 			"deleted": true,
 		},
 	}
-	
+
 	ts.writeJSONResponse(w, response)
 }
 
 // handleEcho 通用回显处理器
 func (ts *TestServer) handleEcho(w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
-	
+
 	response := ResponseData{
 		Message: fmt.Sprintf("%s request to echo endpoint", r.Method),
 		Request: ts.extractRequestInfo(r),
 		Data: map[string]interface{}{
-			"body": string(body),
+			"body":         string(body),
 			"query_params": r.URL.Query(),
 		},
 	}
-	
+
 	ts.writeJSONResponse(w, response)
 }
 
@@ -218,15 +218,15 @@ func (ts *TestServer) handleDelay(w http.ResponseWriter, r *http.Request) {
 	if delayStr == "" {
 		delayStr = "100" // 默认100ms延迟
 	}
-	
+
 	delay, err := strconv.Atoi(delayStr)
 	if err != nil {
 		http.Error(w, "Invalid delay parameter", http.StatusBadRequest)
 		return
 	}
-	
+
 	time.Sleep(time.Duration(delay) * time.Millisecond)
-	
+
 	response := ResponseData{
 		Message: fmt.Sprintf("Delayed response after %dms", delay),
 		Request: ts.extractRequestInfo(r),
@@ -234,7 +234,7 @@ func (ts *TestServer) handleDelay(w http.ResponseWriter, r *http.Request) {
 			"delay_ms": delay,
 		},
 	}
-	
+
 	ts.writeJSONResponse(w, response)
 }
 
@@ -244,15 +244,15 @@ func (ts *TestServer) handleStatus(w http.ResponseWriter, r *http.Request) {
 	if statusStr == "" {
 		statusStr = "200"
 	}
-	
+
 	status, err := strconv.Atoi(statusStr)
 	if err != nil || status < 100 || status > 599 {
 		http.Error(w, "Invalid status code", http.StatusBadRequest)
 		return
 	}
-	
+
 	w.WriteHeader(status)
-	
+
 	response := ResponseData{
 		Message: fmt.Sprintf("Response with status %d", status),
 		Request: ts.extractRequestInfo(r),
@@ -260,18 +260,18 @@ func (ts *TestServer) handleStatus(w http.ResponseWriter, r *http.Request) {
 			"status_code": status,
 		},
 	}
-	
+
 	ts.writeJSONResponse(w, response)
 }
 
 // handleHealth 健康检查
 func (ts *TestServer) handleHealth(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{
-		"status": "ok",
+		"status":    "ok",
 		"timestamp": time.Now(),
-		"server": "murl-test-server",
+		"server":    "gurl-test-server",
 	}
-	
+
 	ts.writeJSONResponse(w, response)
 }
 
@@ -283,7 +283,7 @@ func (ts *TestServer) extractRequestInfo(r *http.Request) RequestInfo {
 			headers[key] = values[0]
 		}
 	}
-	
+
 	body := ""
 	if r.Body != nil {
 		bodyBytes, _ := io.ReadAll(r.Body)
@@ -291,7 +291,7 @@ func (ts *TestServer) extractRequestInfo(r *http.Request) RequestInfo {
 		// 重新设置body以便后续读取
 		r.Body = io.NopCloser(strings.NewReader(body))
 	}
-	
+
 	return RequestInfo{
 		Method:    r.Method,
 		URL:       r.URL.String(),

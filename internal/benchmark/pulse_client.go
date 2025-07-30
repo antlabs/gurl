@@ -13,9 +13,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/antlabs/gurl/internal/config"
+	"github.com/antlabs/gurl/internal/stats"
 	"github.com/antlabs/httparser"
-	"github.com/antlabs/murl/internal/config"
-	"github.com/antlabs/murl/internal/stats"
 	"github.com/antlabs/pulse"
 	"github.com/antlabs/pulse/core"
 )

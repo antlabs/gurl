@@ -1,9 +1,9 @@
-# Makefile for murl - HTTP benchmarking tool
+# Makefile for gurl - HTTP benchmarking tool
 
 # Variables
-BINARY_NAME=murl
+BINARY_NAME=gurl
 BUILD_DIR=build
-CMD_DIR=cmd/murl
+CMD_DIR=cmd/gurl
 MAIN_PACKAGE=./$(CMD_DIR)
 VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT?=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
@@ -38,7 +38,7 @@ build:
 build-all:
 	@echo "Building for multiple platforms..."
 	@mkdir -p $(BUILD_DIR)
-	# Clean only murl binaries
+	# Clean only gurl binaries
 	rm -f $(BUILD_DIR)/$(BINARY_NAME)-*
 	# Linux amd64
 	GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 $(MAIN_PACKAGE)

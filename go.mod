@@ -1,4 +1,4 @@
-module github.com/antlabs/murl
+module github.com/antlabs/gurl
 
 go 1.24.1
 
