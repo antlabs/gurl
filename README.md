@@ -94,6 +94,206 @@ gurl --parse-curl "curl -X POST -H 'Authorization: Bearer token123' -H 'Content-
 gurl -c 10 -d 60s -R 1000 http://example.com
 ```
 
+## Batch Testing with Configuration Files
+
+gurl supports batch testing through YAML or JSON configuration files, allowing you to run multiple tests with different parameters in a single command.
+
+### Basic Batch Testing
+
+```bash
+# Run batch tests from YAML configuration
+gurl --batch-config examples/batch-config.yaml
+
+# Run batch tests from JSON configuration
+gurl --batch-config examples/batch-config.json
+
+# Run tests sequentially instead of concurrently
+gurl --batch-config batch-tests.yaml --batch-sequential
+
+# Limit concurrent batch tests (default: 3)
+gurl --batch-config batch-tests.yaml --batch-concurrency 5
+
+# Generate different report formats
+gurl --batch-config batch-tests.yaml --batch-report csv
+gurl --batch-config batch-tests.yaml --batch-report json
+```
+
+### Configuration File Format
+
+#### YAML Format (`batch-config.yaml`)
+
+```yaml
+version: "1.0"
+tests:
+  - name: "用户登录API"
+    curl: 'curl -X POST https://api.example.com/login -H "Content-Type: application/json" -d "{\"username\":\"test\",\"password\":\"123456\"}"'
+    connections: 100
+    duration: "30s"
+    threads: 4
+    
+  - name: "获取用户信息"
+    curl: 'curl -H "Authorization: Bearer token123" https://api.example.com/user/profile'
+    connections: 50
+    duration: "60s"
+    threads: 2
+    
+  - name: "创建订单API"
+    curl: 'curl -X POST https://api.example.com/orders -H "Content-Type: application/json" -d "{\"product_id\":1,\"quantity\":2}"'
+    connections: 80
+    duration: "45s"
+    rate: 100
+    timeout: "10s"
+    verbose: true
+```
+
+#### JSON Format (`batch-config.json`)
+
+```json
+{
+  "version": "1.0",
+  "tests": [
+    {
+      "name": "API健康检查",
+      "curl": "curl https://api.example.com/health",
+      "connections": 10,
+      "duration": "10s"
+    },
+    {
+      "name": "用户注册接口",
+      "curl": "curl -X POST https://api.example.com/register -H \"Content-Type: application/json\" -d \"{\\\"email\\\":\\\"test@example.com\\\",\\\"password\\\":\\\"password123\\\"}\"",
+      "connections": 50,
+      "duration": "30s",
+      "threads": 3,
+      "rate": 200
+    }
+  ]
+}
+```
+
+### Configuration Parameters
+
+Each test in the batch configuration supports the following parameters:
+
+| Parameter | Type | Description | Default |
+|-----------|------|-------------|----------|
+| `name` | string | Test name (required) | - |
+| `curl` | string | Curl command to parse (required) | - |
+| `connections` | int | Number of HTTP connections | 10 |
+| `duration` | string | Test duration (e.g., "30s", "5m") | 10s |
+| `threads` | int | Number of threads | 2 |
+| `rate` | int | Requests per second limit (0=unlimited) | 0 |
+| `timeout` | string | Request timeout (e.g., "5s") | 30s |
+| `verbose` | bool | Enable verbose output | false |
+| `use_nethttp` | bool | Force use standard net/http | false |
+
+### Batch Testing Options
+
+| Option | Description | Default |
+|--------|-------------|----------|
+| `--batch-config` | Path to batch configuration file (YAML/JSON) | - |
+| `--batch-concurrency` | Maximum concurrent batch tests | 3 |
+| `--batch-sequential` | Run tests sequentially instead of concurrently | false |
+| `--batch-report` | Report format: text, csv, json | text |
+
+### Batch Test Output
+
+#### Text Report (Default)
+```
+=== Batch Test Report ===
+
+Total Tests: 3
+Success Rate: 100.00%
+Total Time: 1m30s
+Start Time: 2024-01-15 10:30:00
+End Time: 2024-01-15 10:31:30
+
+=== Test Results ===
+
+1. 用户登录API
+   Duration: 30.2s
+   Status: SUCCESS
+   Requests: 15000
+   RPS: 496.67
+   Avg Latency: 201ms
+
+2. 获取用户信息
+   Duration: 60.1s
+   Status: SUCCESS
+   Requests: 30000
+   RPS: 499.17
+   Avg Latency: 100ms
+
+=== Performance Summary ===
+
+Total Requests: 45000
+Combined RPS: 995.84
+Latency Stats:
+  Average: 150ms
+  Median:  120ms
+  Min:     50ms
+  Max:     500ms
+```
+
+#### CSV Report
+```bash
+gurl --batch-config batch-tests.yaml --batch-report csv > results.csv
+```
+
+#### JSON Report
+```bash
+gurl --batch-config batch-tests.yaml --batch-report json > results.json
+```
+
+### Advanced Batch Testing Examples
+
+#### API Load Testing Suite
+```yaml
+version: "1.0"
+tests:
+  - name: "Health Check"
+    curl: 'curl https://api.example.com/health'
+    connections: 5
+    duration: "10s"
+    
+  - name: "Authentication"
+    curl: 'curl -X POST https://api.example.com/auth -d "username=test&password=123"'
+    connections: 20
+    duration: "30s"
+    
+  - name: "Data Retrieval"
+    curl: 'curl -H "Authorization: Bearer token" https://api.example.com/data'
+    connections: 100
+    duration: "60s"
+    rate: 500
+    
+  - name: "Heavy Processing"
+    curl: 'curl -X POST https://api.example.com/process -d @large-payload.json'
+    connections: 10
+    duration: "120s"
+    timeout: "30s"
+```
+
+#### E-commerce API Testing
+```yaml
+version: "1.0"
+tests:
+  - name: "Product Search"
+    curl: 'curl "https://shop.example.com/api/search?q=laptop"'
+    connections: 50
+    duration: "45s"
+    
+  - name: "Add to Cart"
+    curl: 'curl -X POST https://shop.example.com/api/cart -H "Content-Type: application/json" -d "{\"product_id\":123,\"quantity\":1}"'
+    connections: 30
+    duration: "30s"
+    
+  - name: "Checkout Process"
+    curl: 'curl -X POST https://shop.example.com/api/checkout -H "Authorization: Bearer token" -d @checkout-data.json'
+    connections: 20
+    duration: "60s"
+    rate: 50
+```
+
 ## Output Format
 
 The output format is similar to wrk:

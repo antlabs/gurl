@@ -1,0 +1,13 @@
+version: "1.0"
+tests:
+  - name: "HTTP GET Test"
+    curl: 'curl https://httpbin.org/get'
+    connections: 5
+    duration: "5s"
+    threads: 1
+    
+  - name: "HTTP POST Test"
+    curl: 'curl -X POST https://httpbin.org/post -H "Content-Type: application/json" -d "{\"test\":\"data\"}"'
+    connections: 3
+    duration: "3s"
+    threads: 1
