@@ -1,0 +1,26 @@
+version: "1.0"
+tests:
+  - name: "Random User API Test"
+    curl: 'curl https://jsonplaceholder.typicode.com/users/{{random:1-10}}'
+    connections: 20
+    duration: "30s"
+    
+  - name: "Dynamic Post Creation"
+    curl: 'curl -X POST https://jsonplaceholder.typicode.com/posts -H "Content-Type: application/json" -d "{\"userId\":{{random:1-10}},\"title\":\"Test Post {{uuid}}\",\"body\":\"Generated at {{timestamp:rfc3339}}\"}"'
+    connections: 15
+    duration: "20s"
+    
+  - name: "Pagination Test"
+    curl: 'curl "https://jsonplaceholder.typicode.com/posts?_page={{sequence:1}}&_limit=10"'
+    connections: 5
+    duration: "15s"
+    
+  - name: "Random HTTP Method Test"
+    curl: 'curl -X {{choice:GET,POST,PUT}} https://httpbin.org/anything/{{random:100-999}}'
+    connections: 10
+    duration: "10s"
+    
+  - name: "Session-based Request"
+    curl: 'curl -H "X-Session-ID: {{uuid}}" -H "X-Timestamp: {{timestamp:unix}}" https://httpbin.org/headers'
+    connections: 25
+    duration: "25s"

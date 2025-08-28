@@ -14,7 +14,9 @@ import (
 	"github.com/antlabs/gurl/internal/batch"
 	"github.com/antlabs/gurl/internal/benchmark"
 	"github.com/antlabs/gurl/internal/config"
+	"github.com/antlabs/gurl/internal/mcp"
 	"github.com/antlabs/gurl/internal/parser"
+	"github.com/antlabs/gurl/internal/template"
 	"github.com/guonaihong/clop"
 )
 
@@ -49,6 +51,13 @@ type Args struct {
 	BatchSequential bool   `clop:"--batch-sequential" usage:"Run batch tests sequentially instead of concurrently"`
 	BatchReport     string `clop:"--batch-report" usage:"Output format for batch report (text|csv|json)" default:"text"`
 
+	// 模板变量选项
+	Variables    []string `clop:"--var" usage:"Define template variables (format: name=type:params)"`
+	HelpTemplates bool     `clop:"--help-templates" usage:"Show template variable help and examples"`
+
+	// MCP选项
+	MCP bool `clop:"--mcp" usage:"Start as an MCP server"`
+
 	// 位置参数
 	URL string `clop:"args=url" usage:"Target URL for benchmarking"`
 }
@@ -79,10 +88,33 @@ func runBenchmark(args *Args) error {
 
 	cfg := args.toConfig()
 
+	// 创建模板解析器并设置变量
+	templateParser := template.NewTemplateParser()
+	if len(args.Variables) > 0 {
+		context, err := template.ParseVariableDefinitions(args.Variables)
+		if err != nil {
+			return fmt.Errorf("failed to parse variable definitions: %w", err)
+		}
+		templateParser = template.NewTemplateParserWithContext(context)
+	}
+
 	// 处理URL和curl命令解析
 	if args.CurlCommand != "" {
+		// 处理模板变量
+		processedCurl := args.CurlCommand
+		if len(args.Variables) > 0 || template.HasTemplateVariables(args.CurlCommand) {
+			processedCurl, err = templateParser.ParseTemplate(args.CurlCommand)
+			if err != nil {
+				return fmt.Errorf("failed to process template variables in curl command: %w", err)
+			}
+			if args.Verbose {
+				fmt.Printf("Original curl: %s\n", args.CurlCommand)
+				fmt.Printf("Processed curl: %s\n", processedCurl)
+			}
+		}
+
 		// 解析curl命令
-		req, err = parser.ParseCurl(args.CurlCommand)
+		req, err = parser.ParseCurl(processedCurl)
 		if err != nil {
 			return fmt.Errorf("failed to parse curl command: %w", err)
 		}
@@ -92,7 +124,19 @@ func runBenchmark(args *Args) error {
 			return fmt.Errorf("URL is required when not using --parse-curl")
 		}
 
+		// 处理URL中的模板变量
 		targetURL := args.URL
+		if len(args.Variables) > 0 || template.HasTemplateVariables(args.URL) {
+			targetURL, err = templateParser.ParseTemplate(args.URL)
+			if err != nil {
+				return fmt.Errorf("failed to process template variables in URL: %w", err)
+			}
+			if args.Verbose {
+				fmt.Printf("Original URL: %s\n", args.URL)
+				fmt.Printf("Processed URL: %s\n", targetURL)
+			}
+		}
+
 		if !strings.HasPrefix(targetURL, "http://") && !strings.HasPrefix(targetURL, "https://") {
 			targetURL = "http://" + targetURL
 		}
@@ -206,6 +250,26 @@ func main() {
 	args := &Args{}
 
 	clop.Bind(args)
+
+	// 检查是否启动MCP服务
+	if args.MCP {
+		server := mcp.NewServer()
+		if err := server.Start(); err != nil {
+			fmt.Fprintf(os.Stderr, "MCP server error: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
+
+	// 检查是否显示模板帮助
+	if args.HelpTemplates {
+		fmt.Print(template.GetAllFunctionsHelp())
+		fmt.Print("\n\n")
+		fmt.Print(template.PrintTemplateExamples())
+		fmt.Print("\n\n")
+		fmt.Print(template.GetQuickStartGuide())
+		return
+	}
 
 	// 检查是否为批量测试模式
 	if args.BatchConfig != "" {

@@ -244,6 +244,140 @@ gurl --batch-config batch-tests.yaml --batch-report csv > results.csv
 gurl --batch-config batch-tests.yaml --batch-report json > results.json
 ```
 
+## URL Template Variables
+
+gurl supports dynamic URL template variables that allow you to generate different values for each request, making it perfect for realistic load testing scenarios.
+
+### Built-in Template Functions
+
+| Function | Description | Usage | Example |
+|----------|-------------|-------|----------|
+| `random` | Random number in range | `{{random:min-max}}` | `{{random:1-1000}}` |
+| `uuid` | Generate UUID | `{{uuid}}` | `550e8400-e29b-41d4-a716-446655440000` |
+| `timestamp` | Current timestamp | `{{timestamp:format}}` | `{{timestamp:unix}}` |
+| `now` | Alias for timestamp | `{{now:format}}` | `{{now:rfc3339}}` |
+| `sequence` | Incrementing numbers | `{{sequence:start}}` | `{{sequence:1}}` |
+| `choice` | Random selection | `{{choice:a,b,c}}` | `{{choice:GET,POST,PUT}}` |
+
+### Template Formats
+
+#### Timestamp Formats
+- `unix` - Unix timestamp (default): `1640995200`
+- `unix_ms` - Unix timestamp in milliseconds: `1640995200000`
+- `rfc3339` - RFC3339 format: `2022-01-01T00:00:00Z`
+- `iso8601` - ISO8601 format
+- `date` - Date only: `2022-01-01`
+- `time` - Time only: `15:04:05`
+
+### Basic Template Usage
+
+#### Simple Random User ID
+```bash
+# Test with random user IDs from 1 to 1000
+gurl -c 50 -d 30s 'https://api.example.com/users/{{random:1-1000}}'
+```
+
+#### UUID Session Testing
+```bash
+# Each request gets a unique session ID
+gurl -c 20 -d 60s 'https://api.example.com/data?session={{uuid}}'
+```
+
+#### Timestamp-based Requests
+```bash
+# Include current timestamp in requests
+gurl -c 10 -d 30s 'https://api.example.com/events?timestamp={{timestamp:unix}}'
+```
+
+#### Sequential Page Testing
+```bash
+# Test pagination with incrementing page numbers
+gurl -c 5 -d 60s 'https://api.example.com/items?page={{sequence:1}}&limit=20'
+```
+
+### Custom Variable Definitions
+
+Define your own variables using the `--var` option:
+
+```bash
+# Define custom variables
+gurl --var user_id=random:1-10000 \
+     --var method=choice:GET,POST,PUT \
+     --var session=uuid \
+     -c 30 -d 45s \
+     'https://api.example.com/{{method}}/users/{{user_id}}?session={{session}}'
+```
+
+### Advanced Template Examples
+
+#### E-commerce API Simulation
+```bash
+gurl --var user_id=random:1-10000 \
+     --var product_id=random:100-999 \
+     --var quantity=choice:1,2,3,4,5 \
+     --var payment=choice:credit_card,paypal,apple_pay \
+     -c 50 -d 60s \
+     --parse-curl 'curl -X POST https://shop.example.com/api/orders \
+                   -H "Content-Type: application/json" \
+                   -d "{\"user_id\":{{user_id}},\"product_id\":{{product_id}},\"quantity\":{{quantity}},\"payment_method\":\"{{payment}}\",\"timestamp\":\"{{timestamp:rfc3339}}\"}"}'
+```
+
+#### Multi-endpoint Testing
+```bash
+gurl --var endpoint=choice:users,orders,products,reviews \
+     --var id=random:1-1000 \
+     --var action=choice:view,edit,delete \
+     -c 25 -d 30s \
+     'https://api.example.com/{{endpoint}}/{{id}}/{{action}}'
+```
+
+### Template Variables in Batch Configuration
+
+Template variables work seamlessly with batch configuration files:
+
+```yaml
+version: "1.0"
+tests:
+  - name: "Dynamic User API Test"
+    curl: 'curl https://api.example.com/users/{{random:1-10000}}'
+    connections: 50
+    duration: "30s"
+    
+  - name: "Session-based Requests"
+    curl: 'curl -H "X-Session-ID: {{uuid}}" -H "X-Timestamp: {{timestamp:unix}}" https://api.example.com/data'
+    connections: 30
+    duration: "45s"
+    
+  - name: "Sequential Pagination"
+    curl: 'curl "https://api.example.com/posts?page={{sequence:1}}&limit=10"'
+    connections: 10
+    duration: "60s"
+```
+
+Run with custom variables:
+```bash
+gurl --batch-config template-test.yaml \
+     --var api_key=uuid \
+     --var region=choice:us-east,us-west,eu-central
+```
+
+### Template Variable Help
+
+Get detailed help and examples for template variables:
+
+```bash
+# Show all available template functions and examples
+gurl --help-templates
+```
+
+### Template Variable Best Practices
+
+1. **Realistic Data Generation**: Use appropriate ranges and choices that match your real-world data
+2. **Performance Considerations**: Template parsing adds minimal overhead but consider it for very high-rate tests
+3. **Debugging**: Use `-v` (verbose) flag to see original and processed URLs/commands
+4. **Variable Reuse**: Define commonly used variables once with `--var` instead of inline functions
+5. **Batch Testing**: Combine template variables with batch configuration for comprehensive test suites
+
 ### Advanced Batch Testing Examples
 
 #### API Load Testing Suite

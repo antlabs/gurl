@@ -1,0 +1,35 @@
+version: "1.0"
+tests:
+  - name: "E-commerce User Journey"
+    curl: 'curl -X POST https://api.shop.example.com/orders -H "Authorization: Bearer {{session_token}}" -H "Content-Type: application/json" -d "{\"user_id\":{{user_id}},\"product_id\":{{product_id}},\"quantity\":{{quantity}},\"payment_method\":\"{{payment_method}}\",\"timestamp\":\"{{order_time}}\"}"'
+    connections: 50
+    duration: "60s"
+    
+  - name: "User Profile Access"
+    curl: 'curl -H "Authorization: Bearer {{session_token}}" https://api.shop.example.com/users/{{user_id}}/profile'
+    connections: 30
+    duration: "45s"
+    
+  - name: "Product Search"
+    curl: 'curl "https://api.shop.example.com/products/search?q={{search_term}}&category={{category}}&page={{page_num}}&limit=20"'
+    connections: 40
+    duration: "30s"
+    
+  - name: "Analytics Event"
+    curl: 'curl -X POST https://analytics.example.com/events -H "Content-Type: application/json" -d "{\"event\":\"{{event_type}}\",\"user_id\":{{user_id}},\"session_id\":\"{{session_token}}\",\"timestamp\":{{timestamp:unix_ms}},\"properties\":{\"page\":\"{{page_name}}\",\"action\":\"{{user_action}}\"}}"'
+    connections: 20
+    duration: "40s"
+
+# Note: This example assumes the following variables are defined via command line:
+# --var user_id=random:1-10000
+# --var product_id=random:100-999
+# --var quantity=choice:1,2,3,4,5
+# --var session_token=uuid
+# --var payment_method=choice:credit_card,paypal,apple_pay,google_pay
+# --var order_time=timestamp:rfc3339
+# --var search_term=choice:laptop,phone,tablet,headphones,keyboard,mouse
+# --var category=choice:electronics,books,clothing,home,sports
+# --var page_num=sequence:1
+# --var event_type=choice:page_view,click,purchase,search,login
+# --var page_name=choice:home,product,cart,checkout,profile
+# --var user_action=choice:view,click,scroll,hover,submit

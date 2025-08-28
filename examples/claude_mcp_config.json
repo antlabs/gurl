@@ -1,0 +1,136 @@
+{
+  "model": "claude-3-5-sonnet-20240620",
+  "tools": [
+    {
+      "name": "gurl.http_request",
+      "description": "Execute a single HTTP request and return the response",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL to send the request to (required)"
+          },
+          "method": {
+            "type": "string",
+            "description": "HTTP method (GET, POST, PUT, DELETE, etc.)",
+            "default": "GET"
+          },
+          "headers": {
+            "type": "object",
+            "description": "HTTP headers to include in the request (key-value pairs)",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "body": {
+            "type": "string",
+            "description": "Request body (for POST, PUT, etc.)"
+          }
+        },
+        "required": ["url"]
+      }
+    },
+    {
+      "name": "gurl.benchmark",
+      "description": "Run an HTTP benchmark test and return performance statistics",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL to test (required if not using curl)"
+          },
+          "curl": {
+            "type": "string",
+            "description": "Curl command to parse and use for benchmarking (alternative to url)"
+          },
+          "connections": {
+            "type": "number",
+            "description": "Number of HTTP connections to keep open",
+            "default": 10
+          },
+          "duration": {
+            "type": "string",
+            "description": "Duration of test (e.g., \"30s\", \"1m\")",
+            "default": "10s"
+          },
+          "threads": {
+            "type": "number",
+            "description": "Number of threads to use",
+            "default": 2
+          },
+          "rate": {
+            "type": "number",
+            "description": "Work rate (requests/sec) 0=unlimited",
+            "default": 0
+          },
+          "timeout": {
+            "type": "string",
+            "description": "Socket/request timeout (e.g., \"5s\")",
+            "default": "30s"
+          },
+          "method": {
+            "type": "string",
+            "description": "HTTP method (if not using curl)",
+            "default": "GET"
+          },
+          "headers": {
+            "type": "object",
+            "description": "HTTP headers to add to request (if not using curl)",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "body": {
+            "type": "string",
+            "description": "HTTP request body (if not using curl)"
+          },
+          "content_type": {
+            "type": "string",
+            "description": "Content-Type header (if not using curl)"
+          },
+          "verbose": {
+            "type": "boolean",
+            "description": "Enable verbose output",
+            "default": false
+          },
+          "latency": {
+            "type": "boolean",
+            "description": "Print detailed latency statistics",
+            "default": false
+          },
+          "use_nethttp": {
+            "type": "boolean",
+            "description": "Force use standard library net/http instead of pulse",
+            "default": false
+          }
+        }
+      }
+    },
+    {
+      "name": "gurl.batch_test",
+      "description": "Run a batch of tests from a configuration file and return a summary report",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "config": {
+            "type": "string",
+            "description": "Path to batch test configuration file (YAML/JSON)"
+          },
+          "verbose": {
+            "type": "boolean",
+            "description": "Enable verbose output",
+            "default": false
+          },
+          "concurrency": {
+            "type": "number",
+            "description": "Maximum concurrent batch tests",
+            "default": 3
+          }
+        },
+        "required": ["config"]
+      }
+    }
+  ]
+}
