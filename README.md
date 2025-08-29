@@ -1,8 +1,10 @@
 # gurl
 
-**gurl** = **m**odern + c**url** + wr**k**
+**gurl** = **g**o + **curl** + wr**k**
 
-A modern HTTP benchmarking tool inspired by wrk, with the ability to parse curl commands for load testing.
+A modern, high-performance HTTP benchmarking tool written in Go, inspired by **wrk**, with native support for parsing **curl** commands.  
+
+Turn your everyday `curl` into a scalable load test in seconds — no configuration needed. Just copy, paste, and go.
 
 ## Features
 
