@@ -17,14 +17,12 @@ import (
 
 // handleBenchmark handles the gurl.benchmark tool
 func (s *Server) handleBenchmark(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	Logger.Printf("handleBenchmark called")
-	
 	defer func() {
 		if r := recover(); r != nil {
 			Logger.Printf("Panic in handleBenchmark: %v", r)
 		}
 	}()
-	
+
 	// Parse arguments
 	connections := mcp.ParseInt(req, "connections", 10)
 	durationStr := mcp.ParseString(req, "duration", "10s")
@@ -120,7 +118,7 @@ func (s *Server) handleBenchmark(ctx context.Context, req mcp.CallToolRequest) (
 	// Create and run benchmark
 	Logger.Printf("Starting benchmark with %d connections, %d threads, duration %s", connections, threads, durationStr)
 	bench := benchmark.New(cfg, httpReq)
-	
+
 	// Create a new context for the benchmark
 	benchCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -130,7 +128,7 @@ func (s *Server) handleBenchmark(ctx context.Context, req mcp.CallToolRequest) (
 		Logger.Printf("Benchmark failed: %v", err)
 		return nil, fmt.Errorf("benchmark failed: %w", err)
 	}
-	
+
 	Logger.Printf("Benchmark completed successfully with %d requests", results.TotalRequests)
 
 	// Format results
@@ -139,6 +137,7 @@ func (s *Server) handleBenchmark(ctx context.Context, req mcp.CallToolRequest) (
 	return &mcp.CallToolResult{
 		Content: []mcp.Content{
 			&mcp.TextContent{
+				Type: "text",
 				Text: result,
 			},
 		},
@@ -148,14 +147,14 @@ func (s *Server) handleBenchmark(ctx context.Context, req mcp.CallToolRequest) (
 // formatBenchmarkResults formats the benchmark results similar to wrk output
 func formatBenchmarkResults(results *stats.Results, cfg config.Config) string {
 	var result strings.Builder
-	
+
 	// Header
 	result.WriteString(fmt.Sprintf("Running %s test\n", cfg.Duration))
 	result.WriteString(fmt.Sprintf("  %d threads and %d connections\n", cfg.Threads, cfg.Connections))
-	
+
 	// Thread Stats
 	result.WriteString("  Thread Stats   Avg      Stdev     Max   +/- Stdev\n")
-	
+
 	// Calculate latency stats
 	latencies := results.GetLatencies()
 	if len(latencies) > 0 {
@@ -164,7 +163,7 @@ func formatBenchmarkResults(results *stats.Results, cfg config.Config) string {
 			total += lat
 		}
 		avg := total / time.Duration(len(latencies))
-		
+
 		// Calculate standard deviation
 		var sumSquares float64
 		for _, lat := range latencies {
@@ -173,7 +172,7 @@ func formatBenchmarkResults(results *stats.Results, cfg config.Config) string {
 		}
 		variance := sumSquares / float64(len(latencies))
 		stdev := time.Duration(variance)
-		
+
 		// Find max
 		max := time.Duration(0)
 		for _, lat := range latencies {
@@ -181,18 +180,18 @@ func formatBenchmarkResults(results *stats.Results, cfg config.Config) string {
 				max = lat
 			}
 		}
-		
-		result.WriteString(fmt.Sprintf("    Latency   %8s %8s %8s %8s\n", 
-			formatDuration(avg), 
-			formatDuration(stdev), 
-			formatDuration(max), 
+
+		result.WriteString(fmt.Sprintf("    Latency   %8s %8s %8s %8s\n",
+			formatDuration(avg),
+			formatDuration(stdev),
+			formatDuration(max),
 			"N/A"))
 	}
-	
+
 	// Calculate RPS
 	rps := float64(results.TotalRequests) / cfg.Duration.Seconds()
 	result.WriteString(fmt.Sprintf("    Req/Sec   %8.2f %8s %8s %8s\n", rps, "N/A", "N/A", "N/A"))
-	
+
 	// Latency Distribution
 	if cfg.PrintLatency && len(latencies) > 0 {
 		result.WriteString("  Latency Distribution\n")
@@ -204,10 +203,10 @@ func formatBenchmarkResults(results *stats.Results, cfg config.Config) string {
 			}
 		}
 	}
-	
+
 	// Summary
 	result.WriteString(fmt.Sprintf("  %d requests in %s\n", results.TotalRequests, cfg.Duration))
-	
+
 	// Status code distribution
 	statusCodes := results.GetStatusCodes()
 	if len(statusCodes) > 0 {
@@ -217,9 +216,9 @@ func formatBenchmarkResults(results *stats.Results, cfg config.Config) string {
 			result.WriteString(fmt.Sprintf("    [%d] %d responses (%.1f%%)\n", code, count, percentage))
 		}
 	}
-	
+
 	result.WriteString(fmt.Sprintf("Requests/sec: %8.2f\n", rps))
-	
+
 	return result.String()
 }
 

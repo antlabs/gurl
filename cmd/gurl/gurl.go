@@ -56,7 +56,8 @@ type Args struct {
 	HelpTemplates bool     `clop:"--help-templates" usage:"Show template variable help and examples"`
 
 	// MCP选项
-	MCP bool `clop:"--mcp" usage:"Start as an MCP server"`
+	MCP          bool   `clop:"--mcp" usage:"Start as an MCP server"`
+	MCPDebugLog  string `clop:"--mcp-debug-log" usage:"Path to MCP debug log file (only used with --mcp)"`
 
 	// 位置参数
 	URL string `clop:"args=url" usage:"Target URL for benchmarking"`
@@ -254,7 +255,7 @@ func main() {
 	// 检查是否启动MCP服务
 	if args.MCP {
 		server := mcp.NewServer()
-		if err := server.Start(); err != nil {
+		if err := server.StartWithDebugLog(args.MCPDebugLog); err != nil {
 			fmt.Fprintf(os.Stderr, "MCP server error: %v\n", err)
 			os.Exit(1)
 		}

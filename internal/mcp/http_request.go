@@ -2,7 +2,9 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -12,23 +14,29 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
+// HTTPResponse represents a structured HTTP response
+type HTTPResponse struct {
+	Status     string            `json:"status"`
+	StatusCode int               `json:"status_code"`
+	Headers    map[string]string `json:"headers"`
+	Body       string            `json:"body"`
+}
+
 // handleHTTPRequest handles the gurl.http_request tool
 func (s *Server) handleHTTPRequest(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	Logger.Printf("handleHTTPRequest called")
-	
 	defer func() {
 		if r := recover(); r != nil {
 			Logger.Printf("Panic in handleHTTPRequest: %v", r)
 		}
 	}()
-	
+
 	// Get URL
 	targetURL := mcp.ParseString(req, "url", "")
 	if targetURL == "" {
 		Logger.Printf("URL is required")
 		return nil, fmt.Errorf("url is required")
 	}
-	
+
 	Logger.Printf("Processing request to URL: %s", targetURL)
 
 	// Validate and format URL
@@ -72,36 +80,50 @@ func (s *Server) handleHTTPRequest(ctx context.Context, req mcp.CallToolRequest)
 		}
 	}
 
-	// Create a new HTTP client
-	client := &http.Client{}
-
 	// Execute request
 	Logger.Printf("Executing request to %s", targetURL)
-	resp, err := client.Do(httpReq)
+	resp, err := http.DefaultClient.Do(httpReq)
 	if err != nil {
 		Logger.Printf("Request failed: %v", err)
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// Format response
-	result := fmt.Sprintf("Status: %s\n", resp.Status)
-	result += fmt.Sprintf("StatusCode: %d\n", resp.StatusCode)
-	
-	// Add headers to result
-	result += "Headers:\n"
-	for k, v := range resp.Header {
-		result += fmt.Sprintf("  %s: %s\n", k, strings.Join(v, ", "))
+	// Read response body
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		Logger.Printf("Failed to read response body: %v", err)
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
-	
-	// TODO: Add response body to result
-	
+
+	// Convert headers to map[string]string
+	responseHeaders := make(map[string]string)
+	for k, v := range resp.Header {
+		responseHeaders[k] = strings.Join(v, ", ")
+	}
+
+	// Create structured response
+	httpResponse := HTTPResponse{
+		Status:     resp.Status,
+		StatusCode: resp.StatusCode,
+		Headers:    responseHeaders,
+		Body:       string(bodyBytes),
+	}
+
+	// Convert to JSON
+	jsonResponse, err := json.Marshal(httpResponse)
+	if err != nil {
+		Logger.Printf("Failed to marshal response to JSON: %v", err)
+		return nil, fmt.Errorf("failed to marshal response to JSON: %w", err)
+	}
+
 	Logger.Printf("Request completed successfully, status code: %d", resp.StatusCode)
 
 	return &mcp.CallToolResult{
 		Content: []mcp.Content{
 			&mcp.TextContent{
-				Text: result,
+				Type: "text",
+				Text: string(jsonResponse),
 			},
 		},
 	}, nil

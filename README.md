@@ -18,7 +18,7 @@ Turn your everyday `curl` into a scalable load test in seconds — no configurat
 ## Installation
 
 ```bash
-go install github.com/antlabs/gurl@latest
+go install github.com/antlabs/gurl/cmd/gurl@latest
 ```
 
 Or build from source:

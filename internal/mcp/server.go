@@ -19,11 +19,25 @@ func NewServer() *Server {
 
 // Start starts the MCP server
 func (s *Server) Start() error {
+	return s.StartWithDebugLog("")
+}
+
+// StartWithDebugLog starts the MCP server with optional debug logging to file
+func (s *Server) StartWithDebugLog(debugLogFile string) error {
+	// Initialize logger with debug file if provided
+	if err := InitLogger(debugLogFile); err != nil {
+		return fmt.Errorf("failed to initialize logger: %w", err)
+	}
+	
+	Logger.Printf("Initializing MCP server...")
+	
 	// Create a new MCP server
 	mcpServer := server.NewMCPServer("gurl", "0.1.0", 
 		server.WithToolCapabilities(true))
 
-	// Add tools
+	Logger.Printf("Adding tools to MCP server...")
+	
+	// Add tools with logging middleware
 	mcpServer.AddTool(
 		mcp.NewTool(
 			"gurl.http_request",
@@ -33,7 +47,7 @@ func (s *Server) Start() error {
 			mcp.WithObject("headers", mcp.Description("HTTP headers to include in the request (key-value pairs)"), mcp.AdditionalProperties(map[string]any{"type": "string"})),
 			mcp.WithString("body", mcp.Description("Request body (for POST, PUT, etc.)")),
 		), 
-		s.handleHTTPRequest,
+		WithLogging("handleHTTPRequest", s.handleHTTPRequest),
 	)
 	
 	mcpServer.AddTool(
@@ -55,7 +69,7 @@ func (s *Server) Start() error {
 			mcp.WithBoolean("latency", mcp.Description("Print detailed latency statistics"), mcp.DefaultBool(false)),
 			mcp.WithBoolean("use_nethttp", mcp.Description("Force use standard library net/http instead of pulse"), mcp.DefaultBool(false)),
 		),
-		s.handleBenchmark,
+		WithLogging("handleBenchmark", s.handleBenchmark),
 	)
 	
 	mcpServer.AddTool(
@@ -67,13 +81,15 @@ func (s *Server) Start() error {
 			mcp.WithBoolean("verbose", mcp.Description("Enable verbose output"), mcp.DefaultBool(false)),
 			mcp.WithNumber("concurrency", mcp.Description("Maximum concurrent batch tests"), mcp.DefaultNumber(3)),
 		),
-		s.handleBatchTest,
+		WithLogging("handleBatchTest", s.handleBatchTest),
 	)
 
 	// Store the server instance
 	s.mcpServer = mcpServer
 
+	Logger.Printf("MCP server configured with %d tools", 3) // We have 3 tools
 	fmt.Println("gurl MCP server started. Waiting for client connection...")
+	Logger.Printf("Starting stdio transport...")
 
 	// Start the server with stdio transport
 	return server.ServeStdio(mcpServer)

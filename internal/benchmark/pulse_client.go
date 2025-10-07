@@ -9,7 +9,6 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"strconv"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -56,7 +55,6 @@ type ConnSession struct {
 	requestCount *int64
 	errorCount   *int64
 	results      *stats.Results
-	wg           *sync.WaitGroup
 	maxBodySize  int64
 }
 
@@ -66,7 +64,6 @@ type HTTPClientHandler struct {
 	requestCount *int64
 	errorCount   *int64
 	results      *stats.Results
-	wg           *sync.WaitGroup
 	maxBodySize  int64
 }
 
@@ -88,7 +85,6 @@ func (h *HTTPClientHandler) OnOpen(c *pulse.Conn) {
 		requestCount: h.requestCount,
 		errorCount:   h.errorCount,
 		results:      h.results,
-		wg:           h.wg,
 		maxBodySize:  h.maxBodySize,
 	}
 
@@ -105,7 +101,6 @@ func (h *HTTPClientHandler) OnOpen(c *pulse.Conn) {
 	if err != nil {
 		atomic.AddInt64(h.errorCount, 1)
 		h.results.AddError(err)
-		h.wg.Done()
 		c.Close()
 		return
 	}
@@ -167,7 +162,7 @@ func (h *HTTPClientHandler) OnClose(c *pulse.Conn, err error) {
 	}
 
 	// 只有在连接关闭时才调用 wg.Done()
-	session.wg.Done()
+	// session.wg.Done()
 }
 
 // buildHTTPRequest 构建HTTP请求字符串

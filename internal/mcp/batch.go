@@ -12,8 +12,6 @@ import (
 
 // handleBatchTest handles the gurl.batch_test tool
 func (s *Server) handleBatchTest(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	Logger.Printf("handleBatchTest called")
-	
 	defer func() {
 		if r := recover(); r != nil {
 			Logger.Printf("Panic in handleBatchTest: %v", r)
