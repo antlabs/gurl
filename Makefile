@@ -52,6 +52,53 @@ build-all:
 	GOOS=windows GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe $(MAIN_PACKAGE)
 	@echo "Cross-compilation complete"
 
+# Build for Linux (amd64 and arm64)
+.PHONY: build-linux
+build-linux:
+	@echo "Building for Linux platforms..."
+	@mkdir -p $(BUILD_DIR)
+	GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 $(MAIN_PACKAGE)
+	GOOS=linux GOARCH=arm64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 $(MAIN_PACKAGE)
+	@echo "Linux binaries built: $(BUILD_DIR)/$(BINARY_NAME)-linux-*"
+
+# Build for macOS (amd64 and arm64)
+.PHONY: build-darwin
+build-darwin:
+	@echo "Building for macOS platforms..."
+	@mkdir -p $(BUILD_DIR)
+	GOOS=darwin GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64 $(MAIN_PACKAGE)
+	GOOS=darwin GOARCH=arm64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-arm64 $(MAIN_PACKAGE)
+	@echo "macOS binaries built: $(BUILD_DIR)/$(BINARY_NAME)-darwin-*"
+
+# Build for Windows (amd64)
+.PHONY: build-windows
+build-windows:
+	@echo "Building for Windows..."
+	@mkdir -p $(BUILD_DIR)
+	GOOS=windows GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe $(MAIN_PACKAGE)
+	@echo "Windows binary built: $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe"
+
+# Generic cross-compile target: make cross-compile OS=linux ARCH=amd64
+.PHONY: cross-compile
+cross-compile:
+	@if [ -z "$(OS)" ] || [ -z "$(ARCH)" ]; then \
+		echo "Usage: make cross-compile OS=<os> ARCH=<arch>"; \
+		echo "Examples:"; \
+		echo "  make cross-compile OS=linux ARCH=amd64"; \
+		echo "  make cross-compile OS=darwin ARCH=arm64"; \
+		echo "  make cross-compile OS=windows ARCH=amd64"; \
+		exit 1; \
+	fi
+	@mkdir -p $(BUILD_DIR)
+	@echo "Cross-compiling for $(OS)/$(ARCH)..."
+	@if [ "$(OS)" = "windows" ]; then \
+		GOOS=$(OS) GOARCH=$(ARCH) $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-$(OS)-$(ARCH).exe $(MAIN_PACKAGE); \
+		echo "Binary built: $(BUILD_DIR)/$(BINARY_NAME)-$(OS)-$(ARCH).exe"; \
+	else \
+		GOOS=$(OS) GOARCH=$(ARCH) $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-$(OS)-$(ARCH) $(MAIN_PACKAGE); \
+		echo "Binary built: $(BUILD_DIR)/$(BINARY_NAME)-$(OS)-$(ARCH)"; \
+	fi
+
 # Install the binary to GOPATH/bin
 .PHONY: install
 install:
@@ -213,6 +260,10 @@ help:
 	@echo "  all          - Clean and build (default)"
 	@echo "  build        - Build the binary"
 	@echo "  build-all    - Build for multiple platforms"
+	@echo "  build-linux  - Build for Linux (amd64, arm64)"
+	@echo "  build-darwin - Build for macOS (amd64, arm64)"
+	@echo "  build-windows- Build for Windows (amd64)"
+	@echo "  cross-compile- Generic cross-compile: make cross-compile OS=<os> ARCH=<arch>"
 	@echo "  install      - Install to GOPATH/bin"
 	@echo "  test         - Run tests"
 	@echo "  test-coverage- Run tests with coverage report"
