@@ -1,0 +1,14 @@
+# Multiple curl commands for load testing
+# Lines starting with # are comments
+
+# GET request to users endpoint
+curl https://httpbin.org/get
+
+# POST request with JSON data
+curl -X POST https://httpbin.org/post -H "Content-Type: application/json" -d '{"test":"data"}'
+
+# GET with custom headers
+curl -H "User-Agent: gurl-test" https://httpbin.org/headers
+
+# Delay endpoint
+curl https://httpbin.org/delay/1

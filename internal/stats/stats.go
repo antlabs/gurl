@@ -7,6 +7,18 @@ import (
 	"time"
 )
 
+// EndpointStats holds statistics for a single endpoint
+type EndpointStats struct {
+	URL          string
+	Requests     int64
+	Errors       int64
+	Latencies    []time.Duration
+	StatusCodes  map[int]int64
+	TotalBytes   int64
+	MinLatency   time.Duration
+	MaxLatency   time.Duration
+}
+
 // Results holds benchmark results
 type Results struct {
 	mu            sync.RWMutex
@@ -18,6 +30,9 @@ type Results struct {
 	minLatency    time.Duration // 最快响应时间
 	maxLatency    time.Duration // 最慢响应时间
 	
+	// 按 URL 分组的统计
+	endpointStats map[string]*EndpointStats
+	
 	TotalRequests int64
 	TotalErrors   int64
 	Duration      time.Duration
@@ -26,10 +41,11 @@ type Results struct {
 // NewResults creates a new Results instance
 func NewResults() *Results {
 	return &Results{
-		latencies:    make([]time.Duration, 0),
-		statusCodes:  make(map[int]int64),
-		errors:       make([]error, 0),
-		reqPerSecond: make([]int64, 0),
+		latencies:     make([]time.Duration, 0),
+		statusCodes:   make(map[int]int64),
+		errors:        make([]error, 0),
+		reqPerSecond:  make([]int64, 0),
+		endpointStats: make(map[string]*EndpointStats),
 	}
 }
 
@@ -45,6 +61,48 @@ func (r *Results) AddLatency(latency time.Duration) {
 	}
 	if latency > r.maxLatency {
 		r.maxLatency = latency
+	}
+}
+
+// AddLatencyWithURL adds a latency measurement for a specific URL
+func (r *Results) AddLatencyWithURL(url string, latency time.Duration, statusCode int, bytes int64, err error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	
+	// 全局统计
+	r.latencies = append(r.latencies, latency)
+	if r.minLatency == 0 || latency < r.minLatency {
+		r.minLatency = latency
+	}
+	if latency > r.maxLatency {
+		r.maxLatency = latency
+	}
+	
+	// 按 URL 统计
+	if r.endpointStats[url] == nil {
+		r.endpointStats[url] = &EndpointStats{
+			URL:         url,
+			Latencies:   make([]time.Duration, 0),
+			StatusCodes: make(map[int]int64),
+		}
+	}
+	
+	stats := r.endpointStats[url]
+	stats.Requests++
+	stats.Latencies = append(stats.Latencies, latency)
+	stats.TotalBytes += bytes
+	
+	if err != nil {
+		stats.Errors++
+	} else {
+		stats.StatusCodes[statusCode]++
+	}
+	
+	if stats.MinLatency == 0 || latency < stats.MinLatency {
+		stats.MinLatency = latency
+	}
+	if latency > stats.MaxLatency {
+		stats.MaxLatency = latency
 	}
 }
 
@@ -296,4 +354,42 @@ func (r *Results) GetLatencyPercentiles() map[float64]time.Duration {
 	}
 	
 	return percentiles
+}
+
+// GetEndpointStats returns statistics for all endpoints
+func (r *Results) GetEndpointStats() map[string]*EndpointStats {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	
+	// 返回副本以避免并发问题
+	result := make(map[string]*EndpointStats)
+	for url, stats := range r.endpointStats {
+		result[url] = &EndpointStats{
+			URL:         stats.URL,
+			Requests:    stats.Requests,
+			Errors:      stats.Errors,
+			Latencies:   append([]time.Duration{}, stats.Latencies...),
+			StatusCodes: make(map[int]int64),
+			TotalBytes:  stats.TotalBytes,
+			MinLatency:  stats.MinLatency,
+			MaxLatency:  stats.MaxLatency,
+		}
+		for code, count := range stats.StatusCodes {
+			result[url].StatusCodes[code] = count
+		}
+	}
+	return result
+}
+
+// GetAverageLatencyForEndpoint returns the average latency for a specific endpoint
+func (stats *EndpointStats) GetAverageLatency() time.Duration {
+	if len(stats.Latencies) == 0 {
+		return 0
+	}
+	
+	var total time.Duration
+	for _, latency := range stats.Latencies {
+		total += latency
+	}
+	return total / time.Duration(len(stats.Latencies))
 }

@@ -10,12 +10,16 @@ Turn your everyday `curl` into a scalable load test in seconds — no configurat
 
 - 🚀 High-performance HTTP load testing
 - 🔧 Parse curl commands with `--parse-curl` option
+- 📁 **Multiple curl commands** from file with load distribution strategies
 - 📊 Detailed statistics similar to wrk
+- 📈 **Per-endpoint statistics** - TPS, latency, status codes for each endpoint
 - 🎨 **Live Terminal UI** with real-time charts and statistics
+- 🎭 **Mock HTTP Server** - Built-in test server for benchmarking validation
 - ⚡ Async I/O for maximum performance
 - 🎯 Configurable connections, threads, and duration
-- 📈 Latency distribution analysis
+- 📉 Latency distribution analysis
 - ⌨️ Interactive controls (press 'q' to stop early)
+- 🔀 Load strategies: random, round-robin
 
 ## Installation
 
@@ -58,6 +62,8 @@ gurl --parse-curl "curl -X POST -H 'Content-Type: application/json' -d '{\"name\
 - `-R, --rate`: Work rate (requests/sec) 0=unlimited (default: 0)
 - `--timeout`: Socket/request timeout (default: 30s)
 - `--parse-curl`: Parse curl command and use it for benchmarking
+- `--parse-curl-file`: Parse multiple curl commands from file (one per line)
+- `--load-strategy`: Load distribution strategy: random, round-robin (default: random)
 - `-X, --method`: HTTP method (default: GET)
 - `-H, --header`: HTTP header to add to request
 - `-d, --data`: HTTP request body
@@ -100,6 +106,70 @@ gurl --parse-curl "curl -X POST -H 'Authorization: Bearer token123' -H 'Content-
 gurl -c 10 -d 60s -R 1000 http://example.com
 ```
 
+### Multiple Curl Commands
+
+Test multiple endpoints simultaneously with different load distribution strategies:
+
+```bash
+# Create a file with multiple curl commands (one per line)
+cat > endpoints.txt << EOF
+curl https://api.example.com/users
+curl -X POST https://api.example.com/orders -H "Content-Type: application/json" -d '{"item":"book"}'
+curl https://api.example.com/products
+curl https://api.example.com/search?q=test
+EOF
+
+# Random distribution (default) - randomly select from endpoints
+gurl --parse-curl-file endpoints.txt -c 100 -d 60s --use-nethttp
+
+# Round-robin distribution - evenly distribute across endpoints
+gurl --parse-curl-file endpoints.txt --load-strategy round-robin -c 100 -d 60s --use-nethttp
+
+# With rate limiting
+gurl --parse-curl-file endpoints.txt --load-strategy random -c 50 -d 30s -R 1000 --use-nethttp
+```
+
+**File Format**:
+- One curl command per line
+- Empty lines are ignored
+- Lines starting with `#` are treated as comments
+- Supports all curl options (headers, methods, data, etc.)
+
+**Load Strategies**:
+- `random`: Randomly select an endpoint for each request (default)
+- `round-robin`: Evenly distribute requests across all endpoints
+
+**Per-Endpoint Statistics**:
+
+When testing multiple endpoints, gurl automatically provides detailed statistics for each endpoint:
+
+```
+=== Per-Endpoint Statistics ===
+
+[https://api.example.com/users]
+  Requests:     250
+  Requests/sec: 50.00
+  Latency:      avg=120.50ms, min=45.20ms, max=350.80ms
+  Status codes: [200] 248 (99.2%), [500] 2 (0.8%)
+  Data:         125.5KB total, 25.1KB/sec
+
+[https://api.example.com/orders]
+  Requests:     245
+  Errors:       5 (2.0%)
+  Requests/sec: 49.00
+  Latency:      avg=145.30ms, min=60.10ms, max=420.50ms
+  Status codes: [200] 230 (93.9%), [400] 10 (4.1%)
+  Data:         98.2KB total, 19.6KB/sec
+```
+
+Each endpoint shows:
+- **Requests**: Total number of requests sent to this endpoint
+- **Errors**: Number of failed requests (connection errors, timeouts)
+- **Requests/sec (TPS)**: Throughput for this specific endpoint
+- **Latency**: Average, minimum, and maximum response times
+- **Status codes**: HTTP status code distribution with percentages
+- **Data**: Total data transferred and transfer rate
+
 ### Live Terminal UI
 
 Enable real-time interactive UI with live statistics:
@@ -110,6 +180,9 @@ gurl --live-ui -c 100 -d 60s --use-nethttp http://example.com
 
 # Live UI with rate limiting
 gurl --live-ui -c 1000 -d 300s -R 5000 --use-nethttp http://api.example.com
+
+# Live UI with multiple endpoints
+gurl --parse-curl-file endpoints.txt --live-ui -c 100 -d 60s --use-nethttp
 ```
 
 The live UI displays:
@@ -125,6 +198,89 @@ The live UI displays:
 - UI updates every second with live data
 
 **Note**: Live UI currently requires `--use-nethttp` flag.
+
+### Mock HTTP Server
+
+Start a built-in mock HTTP server for testing and benchmarking:
+
+```bash
+# Start a simple echo server (returns request details)
+gurl --mock-server --mock-port 8080
+
+# Custom response with delay
+gurl --mock-server --mock-port 8080 --mock-delay 100ms --mock-response '{"status":"ok"}'
+
+# Custom status code
+gurl --mock-server --mock-port 8080 --mock-status 500 --mock-response '{"error":"server error"}'
+
+# Use configuration file for multiple routes
+gurl --mock-server --mock-config examples/mock-server.yaml
+```
+
+**Mock Server Configuration File** (`mock-server.yaml`):
+
+```yaml
+port: 8080
+
+routes:
+  # Echo endpoint - returns request details
+  - path: /echo
+    method: GET
+    echo: true
+
+  # Fast endpoint - no delay
+  - path: /fast
+    method: GET
+    status_code: 200
+    response: '{"message": "Fast response"}'
+
+  # Slow endpoint - 100ms delay
+  - path: /slow
+    method: GET
+    status_code: 200
+    delay: 100ms
+    response: '{"message": "Slow response"}'
+
+  # Error endpoint
+  - path: /error
+    method: GET
+    status_code: 500
+    response: '{"error": "Internal server error"}'
+
+  # POST endpoint with echo
+  - path: /api/users
+    method: POST
+    status_code: 201
+    echo: true
+```
+
+**Testing the Mock Server**:
+
+```bash
+# Terminal 1: Start mock server
+gurl --mock-server --mock-config examples/mock-server.yaml
+
+# Terminal 2: Run benchmark against it
+gurl -c 100 -d 30s --use-nethttp http://localhost:8080/fast
+gurl -c 100 -d 30s --use-nethttp http://localhost:8080/slow
+
+# Test multiple endpoints
+cat > endpoints.txt << EOF
+curl http://localhost:8080/fast
+curl http://localhost:8080/slow
+curl http://localhost:8080/error
+EOF
+
+gurl --parse-curl-file endpoints.txt -c 50 -d 30s --use-nethttp
+```
+
+**Mock Server Features**:
+- **Echo mode**: Returns request details (method, headers, body)
+- **Custom responses**: Define JSON or text responses
+- **Configurable delays**: Simulate slow endpoints
+- **Status codes**: Test error handling
+- **Multiple routes**: Define different endpoints with different behaviors
+- **Request logging**: See all incoming requests in real-time
 
 ## Batch Testing with Configuration Files
 

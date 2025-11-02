@@ -15,6 +15,7 @@ import (
 	"github.com/antlabs/gurl/internal/benchmark"
 	"github.com/antlabs/gurl/internal/config"
 	"github.com/antlabs/gurl/internal/mcp"
+	"github.com/antlabs/gurl/internal/mock"
 	"github.com/antlabs/gurl/internal/parser"
 	"github.com/antlabs/gurl/internal/template"
 	"github.com/guonaihong/clop"
@@ -30,7 +31,9 @@ type Args struct {
 	Timeout     time.Duration `clop:"--timeout" usage:"Socket/request timeout" default:"30s"`
 
 	// curl解析选项
-	CurlCommand string `clop:"--parse-curl" usage:"Parse curl command and use it for benchmarking"`
+	CurlCommand  string `clop:"--parse-curl" usage:"Parse curl command and use it for benchmarking"`
+	CurlFile     string `clop:"--parse-curl-file" usage:"Parse multiple curl commands from file (one per line)"`
+	LoadStrategy string `clop:"--load-strategy" usage:"Load distribution strategy: random, round-robin" default:"random"`
 
 	// HTTP选项
 	Method      string   `clop:"-X;--method" usage:"HTTP method" default:"GET"`
@@ -60,6 +63,14 @@ type Args struct {
 	MCP          bool   `clop:"--mcp" usage:"Start as an MCP server"`
 	MCPDebugLog  string `clop:"--mcp-debug-log" usage:"Path to MCP debug log file (only used with --mcp)"`
 
+	// Mock服务器选项
+	MockServer     bool   `clop:"--mock-server" usage:"Start a mock HTTP server for testing"`
+	MockPort       int    `clop:"--mock-port" usage:"Port for mock server" default:"8080"`
+	MockDelay      string `clop:"--mock-delay" usage:"Response delay (e.g., 100ms, 1s)" default:"0s"`
+	MockResponse   string `clop:"--mock-response" usage:"Custom response body"`
+	MockStatusCode int    `clop:"--mock-status" usage:"HTTP status code to return" default:"200"`
+	MockConfig     string `clop:"--mock-config" usage:"Path to mock server configuration file (YAML/JSON)"`
+
 	// 位置参数
 	URL string `clop:"args=url" usage:"Target URL for benchmarking"`
 }
@@ -73,6 +84,8 @@ func (a *Args) toConfig() config.Config {
 		Rate:         a.Rate,
 		Timeout:      a.Timeout,
 		CurlCommand:  a.CurlCommand,
+		CurlFile:     a.CurlFile,
+		LoadStrategy: a.LoadStrategy,
 		Method:       a.Method,
 		Headers:      a.Headers,
 		Body:         a.Body,
@@ -87,6 +100,7 @@ func (a *Args) toConfig() config.Config {
 // runBenchmark 执行基准测试
 func runBenchmark(args *Args) error {
 	var req *http.Request
+	var requests []*http.Request
 	var err error
 
 	cfg := args.toConfig()
@@ -101,8 +115,15 @@ func runBenchmark(args *Args) error {
 		templateParser = template.NewTemplateParserWithContext(context)
 	}
 
-	// 处理URL和curl命令解析
-	if args.CurlCommand != "" {
+	// 处理多个curl命令文件
+	if args.CurlFile != "" {
+		requests, err = parser.ParseCurlFile(args.CurlFile)
+		if err != nil {
+			return fmt.Errorf("failed to parse curl file: %w", err)
+		}
+		fmt.Printf("Loaded %d curl commands from file\n", len(requests))
+		fmt.Printf("Load strategy: %s\n", cfg.LoadStrategy)
+	} else if args.CurlCommand != "" {
 		// 处理模板变量
 		processedCurl := args.CurlCommand
 		if len(args.Variables) > 0 || template.HasTemplateVariables(args.CurlCommand) {
@@ -173,10 +194,21 @@ func runBenchmark(args *Args) error {
 		cancel()
 	}()
 
-	// 创建并运行基准测试（自动选择pulse或net/http方式）
-	bench := benchmark.New(cfg, req)
+	// 创建并运行基准测试
+	var bench *benchmark.Benchmark
+	var targetURL string
+	
+	if len(requests) > 0 {
+		// 多请求模式
+		bench = benchmark.NewWithMultipleRequests(cfg, requests)
+		targetURL = fmt.Sprintf("%d endpoints", len(requests))
+	} else {
+		// 单请求模式
+		bench = benchmark.New(cfg, req)
+		targetURL = req.URL.String()
+	}
 
-	fmt.Printf("Running %s test @ %s\n", cfg.Duration, req.URL.String())
+	fmt.Printf("Running %s test @ %s\n", cfg.Duration, targetURL)
 	fmt.Printf("  %d threads and %d connections\n", cfg.Threads, cfg.Connections)
 
 	results, err := bench.Run(ctx)
@@ -248,11 +280,68 @@ func runBatchTest(args *Args) error {
 	return nil
 }
 
+// runMockServer 启动 mock HTTP 服务器
+func runMockServer(args *Args) error {
+	var serverConfig mock.ServerConfig
+
+	// 如果有配置文件，加载它
+	if args.MockConfig != "" {
+		config, err := mock.LoadConfig(args.MockConfig)
+		if err != nil {
+			return fmt.Errorf("failed to load mock config: %w", err)
+		}
+
+		serverConfig.Port = config.Port
+		if serverConfig.Port == 0 {
+			serverConfig.Port = args.MockPort
+		}
+		serverConfig.Routes = config.Routes
+	} else {
+		// 使用命令行参数
+		serverConfig.Port = args.MockPort
+		serverConfig.StatusCode = args.MockStatusCode
+		serverConfig.Response = args.MockResponse
+
+		// 解析延迟
+		if args.MockDelay != "" {
+			delay, err := time.ParseDuration(args.MockDelay)
+			if err != nil {
+				return fmt.Errorf("invalid delay format: %w", err)
+			}
+			serverConfig.Delay = delay
+		}
+	}
+
+	// 创建并启动服务器
+	server := mock.NewServer(serverConfig)
+	
+	// 处理信号以优雅关闭
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigChan
+		fmt.Println("\nShutting down mock server...")
+		server.Stop()
+		os.Exit(0)
+	}()
+
+	return server.Start()
+}
+
 // Execute 执行命令行程序
 func main() {
 	args := &Args{}
 
 	clop.Bind(args)
+
+	// 检查是否启动 Mock 服务器
+	if args.MockServer {
+		if err := runMockServer(args); err != nil {
+			fmt.Fprintf(os.Stderr, "Mock server error: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
 
 	// 检查是否启动MCP服务
 	if args.MCP {

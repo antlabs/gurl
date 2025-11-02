@@ -32,6 +32,18 @@ func New(cfg config.Config, req *http.Request) *Benchmark {
 	}
 }
 
+// NewWithMultipleRequests 创建支持多请求的基准测试实例
+func NewWithMultipleRequests(cfg config.Config, requests []*http.Request) *Benchmark {
+	var runner Runner
+
+	// 多请求模式目前只支持 NetHTTP
+	runner = NewNetHTTPBenchmarkWithMultipleRequests(cfg, requests)
+
+	return &Benchmark{
+		runner: runner,
+	}
+}
+
 // Run 执行基准测试
 func (b *Benchmark) Run(ctx context.Context) (*stats.Results, error) {
 	return b.runner.Run(ctx)

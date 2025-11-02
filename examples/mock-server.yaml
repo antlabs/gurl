@@ -1,0 +1,57 @@
+# Mock Server Configuration Example
+port: 8080
+
+routes:
+  # Echo endpoint - returns request details
+  - path: /echo
+    method: GET
+    echo: true
+
+  # Fast endpoint - no delay
+  - path: /fast
+    method: GET
+    status_code: 200
+    response: '{"message": "Fast response", "latency": "0ms"}'
+
+  # Slow endpoint - 100ms delay
+  - path: /slow
+    method: GET
+    status_code: 200
+    delay: 100ms
+    response: '{"message": "Slow response", "latency": "100ms"}'
+
+  # Very slow endpoint - 1s delay
+  - path: /very-slow
+    method: GET
+    status_code: 200
+    delay: 1s
+    response: '{"message": "Very slow response", "latency": "1s"}'
+
+  # Error endpoint - returns 500
+  - path: /error
+    method: GET
+    status_code: 500
+    response: '{"error": "Internal server error"}'
+
+  # Not found endpoint
+  - path: /notfound
+    method: GET
+    status_code: 404
+    response: '{"error": "Not found"}'
+
+  # POST endpoint with echo
+  - path: /api/users
+    method: POST
+    status_code: 201
+    echo: true
+
+  # PUT endpoint
+  - path: /api/users
+    method: PUT
+    status_code: 200
+    response: '{"message": "User updated"}'
+
+  # DELETE endpoint
+  - path: /api/users
+    method: DELETE
+    status_code: 204

@@ -1,0 +1,3 @@
+curl http://localhost:8080/api/fast
+curl http://localhost:8080/api/slow
+curl http://localhost:8080/api/error

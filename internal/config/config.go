@@ -15,7 +15,9 @@ type Config struct {
 	Timeout     time.Duration // Request timeout
 
 	// Curl parsing
-	CurlCommand string // Curl command to parse
+	CurlCommand  string // Curl command to parse
+	CurlFile     string // File containing multiple curl commands
+	LoadStrategy string // Load distribution strategy: random, round-robin
 
 	// HTTP options
 	Method      string   // HTTP method

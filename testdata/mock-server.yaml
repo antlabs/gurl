@@ -1,0 +1,17 @@
+port: 8080
+routes:
+  - path: /api/fast
+    method: GET
+    status_code: 200
+    response: '{"latency": "0ms"}'
+  
+  - path: /api/slow
+    method: GET
+    status_code: 200
+    delay: 100ms
+    response: '{"latency": "100ms"}'
+  
+  - path: /api/error
+    method: GET
+    status_code: 500
+    response: '{"error": "Internal error"}'

@@ -22,6 +22,7 @@ type Runner interface {
 type NetHTTPBenchmark struct {
 	config      config.Config
 	request     *http.Request
+	requestPool *RequestPool // 多请求池
 	client      *http.Client
 	rateLimiter ratelimit.Limiter // Uber 限流器
 }
@@ -47,6 +48,37 @@ func NewNetHTTPBenchmark(cfg config.Config, req *http.Request) *NetHTTPBenchmark
 	return &NetHTTPBenchmark{
 		config:      cfg,
 		request:     req,
+		requestPool: nil, // 单请求模式
+		client:      client,
+		rateLimiter: limiter,
+	}
+}
+
+// NewNetHTTPBenchmarkWithMultipleRequests creates a new net/http benchmark with multiple requests
+func NewNetHTTPBenchmarkWithMultipleRequests(cfg config.Config, requests []*http.Request) *NetHTTPBenchmark {
+	// 创建HTTP客户端
+	client := &http.Client{
+		Timeout: cfg.Timeout,
+		Transport: &http.Transport{
+			MaxIdleConns:        cfg.Connections,
+			MaxIdleConnsPerHost: cfg.Connections,
+			IdleConnTimeout:     30 * time.Second,
+		},
+	}
+
+	// 创建 Uber 限流器（所有连接共享）
+	var limiter ratelimit.Limiter
+	if cfg.Rate > 0 {
+		limiter = ratelimit.New(cfg.Rate) // 每秒请求数
+	}
+
+	// 创建请求池
+	requestPool := NewRequestPool(requests, cfg.LoadStrategy)
+
+	return &NetHTTPBenchmark{
+		config:      cfg,
+		request:     nil, // 多请求模式不使用单个请求
+		requestPool: requestPool,
 		client:      client,
 		rateLimiter: limiter,
 	}
@@ -197,24 +229,43 @@ func (b *NetHTTPBenchmark) runConnection(ctx context.Context, requestCount, erro
 			}
 		}
 
+		// 获取要执行的请求
+		var req *http.Request
+		if b.requestPool != nil {
+			// 多请求模式：从请求池获取
+			req = b.requestPool.GetRequest()
+		} else {
+			// 单请求模式
+			req = b.request
+		}
+
 		// 执行请求
 		start := time.Now()
-		resp, err := b.client.Do(b.request.Clone(ctx))
+		resp, err := b.client.Do(req.Clone(ctx))
 		duration := time.Since(start)
 
 		atomic.AddInt64(requestCount, 1)
 
+		var bytesRead int64
+		var statusCode int
+		
 		if err != nil {
 			atomic.AddInt64(errorCount, 1)
 			results.AddError(err)
 		} else {
 			// 读取并丢弃响应体数据，计算字节数
-			bytesRead, _ := io.Copy(io.Discard, resp.Body)
+			bytesRead, _ = io.Copy(io.Discard, resp.Body)
 			resp.Body.Close()
+			statusCode = resp.StatusCode
 
 			results.AddLatency(duration)
-			results.AddStatusCode(resp.StatusCode)
+			results.AddStatusCode(statusCode)
 			results.AddBytes(bytesRead)
+		}
+		
+		// 如果是多请求模式，记录每个 URL 的统计
+		if b.requestPool != nil {
+			results.AddLatencyWithURL(req.URL.String(), duration, statusCode, bytesRead, err)
 		}
 	}
 }
