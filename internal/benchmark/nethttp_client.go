@@ -64,6 +64,32 @@ func (b *NetHTTPBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 	var requestCount int64
 	var errorCount int64
 
+	// 启动采样 goroutine，每秒记录请求数
+	samplingDone := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+		
+		lastCount := int64(0)
+		for {
+			select {
+			case <-ticker.C:
+				currentCount := atomic.LoadInt64(&requestCount)
+				reqThisSecond := currentCount - lastCount
+				results.AddReqPerSecond(reqThisSecond)
+				lastCount = currentCount
+			case <-testCtx.Done():
+				// 记录最后一个不完整的时间段
+				currentCount := atomic.LoadInt64(&requestCount)
+				if currentCount > lastCount {
+					results.AddReqPerSecond(currentCount - lastCount)
+				}
+				close(samplingDone)
+				return
+			}
+		}
+	}()
+
 	// 启动工作线程
 	for i := 0; i < b.config.Threads; i++ {
 		wg.Add(1)
@@ -75,6 +101,9 @@ func (b *NetHTTPBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 
 	// 等待所有工作线程完成
 	wg.Wait()
+	
+	// 等待采样完成
+	<-samplingDone
 
 	// 计算最终结果
 	results.TotalRequests = atomic.LoadInt64(&requestCount)

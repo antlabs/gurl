@@ -31,9 +31,15 @@ func PrintResults(results *stats.Results, cfg config.Config) {
 			calculateStdDevPercentage(latencies, avg, stdev))
 	}
 
-	// 计算QPS
+	// 计算 Req/Sec 统计
 	qps := float64(results.TotalRequests) / results.Duration.Seconds()
-	fmt.Printf("    Req/Sec   %8.2f %8s %8s %8s\n", qps, "N/A", "N/A", "N/A")
+	avg, stdev, max, percentage := results.GetReqPerSecStats()
+	if avg > 0 {
+		fmt.Printf("    Req/Sec   %8.2f %8.2f %8.2f %8.2f%%\n", avg, stdev, max, percentage)
+	} else {
+		// 如果没有采样数据，使用总体 QPS
+		fmt.Printf("    Req/Sec   %8.2f %8s %8s %8s\n", qps, "N/A", "N/A", "N/A")
+	}
 
 	// 打印延迟分布
 	if cfg.PrintLatency && len(latencies) > 0 {

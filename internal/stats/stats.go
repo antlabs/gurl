@@ -13,6 +13,7 @@ type Results struct {
 	statusCodes   map[int]int64
 	errors        []error
 	totalBytes    int64
+	reqPerSecond  []int64 // 每秒的请求数统计
 	
 	TotalRequests int64
 	TotalErrors   int64
@@ -22,9 +23,10 @@ type Results struct {
 // NewResults creates a new Results instance
 func NewResults() *Results {
 	return &Results{
-		latencies:   make([]time.Duration, 0),
-		statusCodes: make(map[int]int64),
-		errors:      make([]error, 0),
+		latencies:    make([]time.Duration, 0),
+		statusCodes:  make(map[int]int64),
+		errors:       make([]error, 0),
+		reqPerSecond: make([]int64, 0),
 	}
 }
 
@@ -167,4 +169,68 @@ func (r *Results) GetWriteErrors() int64 {
 // GetTimeoutErrors returns the number of timeout errors
 func (r *Results) GetTimeoutErrors() int64 {
 	return 0
+}
+
+// AddReqPerSecond adds a request per second sample
+func (r *Results) AddReqPerSecond(count int64) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.reqPerSecond = append(r.reqPerSecond, count)
+}
+
+// GetReqPerSecond returns a copy of all req/sec samples
+func (r *Results) GetReqPerSecond() []int64 {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	
+	samples := make([]int64, len(r.reqPerSecond))
+	copy(samples, r.reqPerSecond)
+	return samples
+}
+
+// GetReqPerSecStats calculates statistics for req/sec
+func (r *Results) GetReqPerSecStats() (avg, stdev, max float64, percentage float64) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	
+	if len(r.reqPerSecond) == 0 {
+		return 0, 0, 0, 0
+	}
+	
+	// 计算平均值
+	var sum int64
+	max = 0
+	for _, v := range r.reqPerSecond {
+		sum += v
+		if float64(v) > max {
+			max = float64(v)
+		}
+	}
+	avg = float64(sum) / float64(len(r.reqPerSecond))
+	
+	// 计算标准差
+	if len(r.reqPerSecond) <= 1 {
+		return avg, 0, max, 0
+	}
+	
+	var sumSquares float64
+	for _, v := range r.reqPerSecond {
+		diff := float64(v) - avg
+		sumSquares += diff * diff
+	}
+	variance := sumSquares / float64(len(r.reqPerSecond)-1)
+	stdev = math.Sqrt(variance)
+	
+	// 计算在一个标准差范围内的百分比
+	lower := avg - stdev
+	upper := avg + stdev
+	count := 0
+	for _, v := range r.reqPerSecond {
+		if float64(v) >= lower && float64(v) <= upper {
+			count++
+		}
+	}
+	percentage = float64(count) / float64(len(r.reqPerSecond)) * 100.0
+	
+	return avg, stdev, max, percentage
 }
