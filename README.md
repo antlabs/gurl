@@ -11,9 +11,11 @@ Turn your everyday `curl` into a scalable load test in seconds — no configurat
 - 🚀 High-performance HTTP load testing
 - 🔧 Parse curl commands with `--parse-curl` option
 - 📊 Detailed statistics similar to wrk
+- 🎨 **Live Terminal UI** with real-time charts and statistics
 - ⚡ Async I/O for maximum performance
 - 🎯 Configurable connections, threads, and duration
 - 📈 Latency distribution analysis
+- ⌨️ Interactive controls (press 'q' to stop early)
 
 ## Installation
 
@@ -62,6 +64,8 @@ gurl --parse-curl "curl -X POST -H 'Content-Type: application/json' -d '{\"name\
 - `--content-type`: Content-Type header
 - `-v, --verbose`: Verbose output
 - `--latency`: Print latency statistics
+- `--live-ui`: Enable live terminal UI with real-time stats (interactive mode)
+- `--use-nethttp`: Force use standard library net/http instead of pulse
 
 ## Examples
 
@@ -95,6 +99,32 @@ gurl --parse-curl "curl -X POST -H 'Authorization: Bearer token123' -H 'Content-
 # Limit to 1000 requests per second
 gurl -c 10 -d 60s -R 1000 http://example.com
 ```
+
+### Live Terminal UI
+
+Enable real-time interactive UI with live statistics:
+
+```bash
+# Basic live UI
+gurl --live-ui -c 100 -d 60s --use-nethttp http://example.com
+
+# Live UI with rate limiting
+gurl --live-ui -c 1000 -d 300s -R 5000 --use-nethttp http://api.example.com
+```
+
+The live UI displays:
+- **Progress Bar**: Visual progress indicator with elapsed/total time
+- **Real-time Stats**: Requests, slowest/fastest/average latency, requests per second
+- **Status Code Distribution**: HTTP status codes with color coding (2xx=green, 4xx=yellow, 5xx=red)
+- **Error Statistics**: Connection errors and error rate
+- **Request Chart**: Bar chart showing requests per second over time
+- **Response Time Histogram**: Latency distribution (p50, p75, p90, p95, p99)
+
+**Interactive Controls**:
+- Press `q` or `Ctrl+C` to stop the test early
+- UI updates every second with live data
+
+**Note**: Live UI currently requires `--use-nethttp` flag.
 
 ## Batch Testing with Configuration Files
 
