@@ -10,6 +10,7 @@ import (
 
 	"github.com/antlabs/gurl/internal/config"
 	"github.com/antlabs/gurl/internal/stats"
+	"go.uber.org/ratelimit"
 )
 
 // Runner 定义基准测试运行器接口
@@ -19,9 +20,10 @@ type Runner interface {
 
 // NetHTTPBenchmark represents a net/http based benchmark instance
 type NetHTTPBenchmark struct {
-	config  config.Config
-	request *http.Request
-	client  *http.Client
+	config      config.Config
+	request     *http.Request
+	client      *http.Client
+	rateLimiter ratelimit.Limiter // Uber 限流器
 }
 
 // NewNetHTTPBenchmark creates a new net/http benchmark instance
@@ -36,10 +38,17 @@ func NewNetHTTPBenchmark(cfg config.Config, req *http.Request) *NetHTTPBenchmark
 		},
 	}
 
+	// 创建 Uber 限流器（所有连接共享）
+	var limiter ratelimit.Limiter
+	if cfg.Rate > 0 {
+		limiter = ratelimit.New(cfg.Rate) // 每秒请求数
+	}
+
 	return &NetHTTPBenchmark{
-		config:  cfg,
-		request: req,
-		client:  client,
+		config:      cfg,
+		request:     req,
+		client:      client,
+		rateLimiter: limiter,
 	}
 }
 
@@ -92,63 +101,56 @@ func (b *NetHTTPBenchmark) runWorker(ctx context.Context, threadID int, requestC
 			b.runConnection(ctx, requestCount, errorCount, results)
 		}()
 	}
-
 	wg.Wait()
 }
 
 // runConnection handles a single connection's requests
 func (b *NetHTTPBenchmark) runConnection(ctx context.Context, requestCount, errorCount *int64, results *stats.Results) {
-	rateLimiter := b.createRateLimiter()
-
 	for {
+		// 先检查 context 是否已取消
 		select {
 		case <-ctx.Done():
 			return
 		default:
-			// 速率限制
-			if rateLimiter != nil {
-				select {
-				case <-rateLimiter:
-				case <-ctx.Done():
-					return
-				}
-			}
+		}
 
-			// 执行请求
-			start := time.Now()
-			resp, err := b.client.Do(b.request.Clone(ctx))
-			duration := time.Since(start)
+		// Uber 限流器：自动等待并获取令牌
+		// Take() 会阻塞，所以在调用前先检查 context
+		if b.rateLimiter != nil {
+			// 在 goroutine 中调用 Take()，这样可以响应 context 取消
+			done := make(chan struct{})
+			go func() {
+				b.rateLimiter.Take()
+				close(done)
+			}()
 
-			atomic.AddInt64(requestCount, 1)
-
-			if err != nil {
-				atomic.AddInt64(errorCount, 1)
-				results.AddError(err)
-			} else {
-				// 读取并丢弃响应体数据，计算字节数
-				bytesRead, _ := io.Copy(io.Discard, resp.Body)
-				resp.Body.Close()
-
-				results.AddLatency(duration)
-				results.AddStatusCode(resp.StatusCode)
-				results.AddBytes(bytesRead)
+			select {
+			case <-done:
+				// 获得令牌，继续执行
+			case <-ctx.Done():
+				// context 取消，立即返回
+				return
 			}
 		}
-	}
-}
 
-// createRateLimiter creates a rate limiter if rate limiting is enabled
-func (b *NetHTTPBenchmark) createRateLimiter() <-chan time.Time {
-	if b.config.Rate <= 0 {
-		return nil
-	}
+		// 执行请求
+		start := time.Now()
+		resp, err := b.client.Do(b.request.Clone(ctx))
+		duration := time.Since(start)
 
-	// 计算每个连接的速率
-	ratePerConnection := b.config.Rate / b.config.Connections
-	if ratePerConnection <= 0 {
-		ratePerConnection = 1
-	}
+		atomic.AddInt64(requestCount, 1)
 
-	interval := time.Second / time.Duration(ratePerConnection)
-	return time.Tick(interval)
+		if err != nil {
+			atomic.AddInt64(errorCount, 1)
+			results.AddError(err)
+		} else {
+			// 读取并丢弃响应体数据，计算字节数
+			bytesRead, _ := io.Copy(io.Discard, resp.Body)
+			resp.Body.Close()
+
+			results.AddLatency(duration)
+			results.AddStatusCode(resp.StatusCode)
+			results.AddBytes(bytesRead)
+		}
+	}
 }

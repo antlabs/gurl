@@ -16,6 +16,7 @@ require (
 	github.com/antlabs/strsim v0.0.2 // indirect
 	github.com/antlabs/task v0.0.0-20250706071410-2137462668b9 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
+	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/ebitengine/purego v0.8.4 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
@@ -29,6 +30,7 @@ require (
 	github.com/spf13/cast v1.7.1 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
+	go.uber.org/ratelimit v0.3.1 // indirect
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/sys v0.31.0 // indirect
