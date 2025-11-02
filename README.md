@@ -192,6 +192,27 @@ The live UI displays:
 - **Error Statistics**: Connection errors and error rate
 - **Request Chart**: Bar chart showing requests per second over time
 - **Response Time Histogram**: Latency distribution (p50, p75, p90, p95, p99)
+- **Per-Endpoint Table** (multi-endpoint mode): Real-time statistics for each endpoint
+
+**Multi-Endpoint Live UI**:
+
+When testing multiple endpoints with `--parse-curl-file`, the Live UI automatically displays an additional table showing per-endpoint statistics:
+
+```
+┌─Per-Endpoint Statistics (live)────────────────────────────┐
+│ Endpoint              │ Req/s │ Avg    │ Min   │ Max     │
+├───────────────────────┼───────┼────────┼───────┼─────────┤
+│ /api/fast             │ 1000  │ 10ms   │ 5ms   │ 50ms    │
+│ /api/slow             │  950  │ 105ms  │ 95ms  │ 150ms   │
+│ /api/error            │  957  │ 15ms   │ 10ms  │ 30ms    │
+└───────────────────────┴───────┴────────┴───────┴─────────┘
+```
+
+Each row shows:
+- Endpoint URL (truncated if too long)
+- Requests per second (TPS)
+- Average, minimum, and maximum latency
+- Error count and percentage
 
 **Interactive Controls**:
 - Press `q` or `Ctrl+C` to stop the test early

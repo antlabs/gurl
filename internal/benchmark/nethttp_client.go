@@ -109,6 +109,9 @@ func (b *NetHTTPBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 		}
 	}
 
+	// 记录开始时间
+	startTime := time.Now()
+	
 	// 启动采样 goroutine，每秒记录请求数
 	samplingDone := make(chan struct{})
 	go func() {
@@ -133,6 +136,22 @@ func (b *NetHTTPBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 					latencyPercentiles := results.GetLatencyPercentiles()
 					errors := atomic.LoadInt64(&errorCount)
 					liveUI.Update(currentCount, reqThisSecond, statusCodes, avgLatency, minLatency, maxLatency, latencyPercentiles, errors)
+					
+					// 如果是多端点模式，更新每个端点的统计
+					if b.requestPool != nil {
+						endpointStats := results.GetEndpointStats()
+						elapsed := time.Since(startTime)
+						if elapsed == 0 {
+							elapsed = time.Second
+						}
+						
+						for url, stats := range endpointStats {
+							reqPerSec := float64(stats.Requests) / elapsed.Seconds()
+							avgLat := stats.GetAverageLatency()
+							liveUI.UpdateEndpointStats(url, stats.Requests, reqPerSec, avgLat, stats.MinLatency, stats.MaxLatency, stats.Errors)
+						}
+					}
+					
 					liveUI.Render()
 				}
 			case <-testCtx.Done():
