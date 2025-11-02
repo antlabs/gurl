@@ -41,6 +41,7 @@ type Args struct {
 	// 输出选项
 	Verbose      bool `clop:"-v;--verbose" usage:"Verbose output"`
 	PrintLatency bool `clop:"--latency" usage:"Print latency statistics"`
+	LiveUI       bool `clop:"--live-ui" usage:"Enable live terminal UI with real-time stats"`
 
 	// 引擎选项
 	UseNetHTTP bool `clop:"--use-nethttp" usage:"Force use standard library net/http instead of pulse"`
@@ -78,6 +79,7 @@ func (a *Args) toConfig() config.Config {
 		ContentType:  a.ContentType,
 		Verbose:      a.Verbose,
 		PrintLatency: a.PrintLatency,
+		LiveUI:       a.LiveUI,
 		UseNetHTTP:   a.UseNetHTTP,
 	}
 }

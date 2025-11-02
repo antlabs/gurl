@@ -26,6 +26,7 @@ type Config struct {
 	// Output options
 	Verbose      bool // Verbose output
 	PrintLatency bool // Print latency statistics
+	LiveUI       bool // Enable live terminal UI
 
 	// Engine options
 	UseNetHTTP bool // Force use standard library net/http instead of pulse

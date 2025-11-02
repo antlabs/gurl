@@ -64,6 +64,19 @@ func (b *NetHTTPBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 	var requestCount int64
 	var errorCount int64
 
+	// 初始化 Live UI（如果启用）
+	var liveUI *LiveUI
+	var uiErr error
+	if b.config.LiveUI {
+		liveUI, uiErr = NewLiveUI(b.config.Duration)
+		if uiErr != nil {
+			// 如果 UI 初始化失败，继续运行但不显示 UI
+			b.config.LiveUI = false
+		} else {
+			defer liveUI.Close()
+		}
+	}
+
 	// 启动采样 goroutine，每秒记录请求数
 	samplingDone := make(chan struct{})
 	go func() {
@@ -78,12 +91,34 @@ func (b *NetHTTPBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 				reqThisSecond := currentCount - lastCount
 				results.AddReqPerSecond(reqThisSecond)
 				lastCount = currentCount
+				
+				// 更新 Live UI
+				if liveUI != nil {
+					avgLatency := results.GetAverageLatency()
+					minLatency := results.GetMinLatency()
+					maxLatency := results.GetMaxLatency()
+					statusCodes := results.GetStatusCodes()
+					latencyPercentiles := results.GetLatencyPercentiles()
+					errors := atomic.LoadInt64(&errorCount)
+					liveUI.Update(currentCount, reqThisSecond, statusCodes, avgLatency, minLatency, maxLatency, latencyPercentiles, errors)
+					liveUI.Render()
+				}
 			case <-testCtx.Done():
 				// 记录最后一个不完整的时间段
 				currentCount := atomic.LoadInt64(&requestCount)
 				if currentCount > lastCount {
 					results.AddReqPerSecond(currentCount - lastCount)
 				}
+				close(samplingDone)
+				return
+			case <-func() <-chan struct{} {
+				if liveUI != nil {
+					return liveUI.StopChan()
+				}
+				return nil
+			}():
+				// 用户按下退出键，提前取消测试
+				cancel()
 				close(samplingDone)
 				return
 			}

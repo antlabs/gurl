@@ -2,6 +2,7 @@ package stats
 
 import (
 	"math"
+	"sort"
 	"sync"
 	"time"
 )
@@ -14,6 +15,8 @@ type Results struct {
 	errors        []error
 	totalBytes    int64
 	reqPerSecond  []int64 // 每秒的请求数统计
+	minLatency    time.Duration // 最快响应时间
+	maxLatency    time.Duration // 最慢响应时间
 	
 	TotalRequests int64
 	TotalErrors   int64
@@ -35,6 +38,14 @@ func (r *Results) AddLatency(latency time.Duration) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.latencies = append(r.latencies, latency)
+	
+	// 更新最小和最大延迟
+	if r.minLatency == 0 || latency < r.minLatency {
+		r.minLatency = latency
+	}
+	if latency > r.maxLatency {
+		r.maxLatency = latency
+	}
 }
 
 // AddStatusCode adds a status code count
@@ -233,4 +244,56 @@ func (r *Results) GetReqPerSecStats() (avg, stdev, max float64, percentage float
 	percentage = float64(count) / float64(len(r.reqPerSecond)) * 100.0
 	
 	return avg, stdev, max, percentage
+}
+
+// GetMinLatency returns the minimum latency
+func (r *Results) GetMinLatency() time.Duration {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.minLatency
+}
+
+// GetMaxLatency returns the maximum latency
+func (r *Results) GetMaxLatency() time.Duration {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.maxLatency
+}
+
+// GetLatencyPercentiles returns latency percentiles (p50, p75, p90, p95, p99)
+// 使用采样以避免对大数据集排序
+func (r *Results) GetLatencyPercentiles() map[float64]time.Duration {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	
+	percentiles := map[float64]time.Duration{}
+	
+	if len(r.latencies) == 0 {
+		return percentiles
+	}
+	
+	// 采样：最多使用 10000 个样本
+	sampleSize := len(r.latencies)
+	if sampleSize > 10000 {
+		sampleSize = 10000
+	}
+	
+	// 使用最近的样本
+	startIdx := len(r.latencies) - sampleSize
+	sample := make([]time.Duration, sampleSize)
+	copy(sample, r.latencies[startIdx:])
+	
+	// 使用标准库排序（快速排序，O(n log n)）
+	sort.Slice(sample, func(i, j int) bool {
+		return sample[i] < sample[j]
+	})
+	
+	// 计算百分位
+	ps := []float64{50, 75, 90, 95, 99}
+	for _, p := range ps {
+		idx := int(float64(len(sample)-1) * p / 100.0)
+		percentiles[p] = sample[idx]
+	}
+	
+	return percentiles
 }
