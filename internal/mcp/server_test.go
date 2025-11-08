@@ -3,6 +3,9 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -11,6 +14,14 @@ import (
 
 // TestMCPServerIntegration 测试完整的MCP服务器集成
 func TestMCPServerIntegration(t *testing.T) {
+	// Create a mock HTTP server
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, `{"status": "ok"}`)
+	}))
+	defer mockServer.Close()
+	
 	server := NewServer()
 	
 	// 测试服务器创建
@@ -26,7 +37,7 @@ func TestMCPServerIntegration(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: "gurl.http_request",
 			Arguments: map[string]any{
-				"url":    "http://httpbin.org/get",
+				"url":    mockServer.URL,
 				"method": "GET",
 			},
 		},
@@ -190,12 +201,12 @@ func TestErrorScenarios(t *testing.T) {
 				Params: mcp.CallToolParams{
 					Name: "gurl.http_request",
 					Arguments: map[string]any{
-						"url": "http://httpbin.org/delay/1",
+						"url": "http://localhost:1", // Use unreachable address
 					},
 				},
 			},
-			expectError: false,
-			description: "Should handle delayed responses",
+			expectError: true,
+			description: "Should handle connection errors",
 		},
 	}
 	

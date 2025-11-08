@@ -3,12 +3,34 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 func TestHandleHTTPRequest(t *testing.T) {
+	// Create a mock HTTP server
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/get":
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprintf(w, `{"method": "GET", "url": "%s"}`, r.URL.String())
+		case "/post":
+			body, _ := io.ReadAll(r.Body)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprintf(w, `{"method": "POST", "body": %s}`, string(body))
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer mockServer.Close()
+
 	server := NewServer()
 
 	tests := []struct {
@@ -23,7 +45,7 @@ func TestHandleHTTPRequest(t *testing.T) {
 				Params: mcp.CallToolParams{
 					Name: "gurl.http_request",
 					Arguments: map[string]any{
-						"url":    "http://httpbin.org/get",
+						"url":    mockServer.URL + "/get",
 						"method": "GET",
 					},
 				},
@@ -36,7 +58,7 @@ func TestHandleHTTPRequest(t *testing.T) {
 				Params: mcp.CallToolParams{
 					Name: "gurl.http_request",
 					Arguments: map[string]any{
-						"url":    "http://httpbin.org/post",
+						"url":    mockServer.URL + "/post",
 						"method": "POST",
 						"headers": map[string]any{
 							"Content-Type": "application/json",

@@ -278,6 +278,10 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 	go func() {
 		loop.Serve()
 	}()
+	
+	// 等待event loop启动
+	time.Sleep(50 * time.Millisecond)
+	
 	// 建立连接
 	port := pb.target.Port()
 	if port == "" {
@@ -309,8 +313,11 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 	<-testCtx.Done()
 
 	fmt.Println("testCtx.Done()")
-	// 等待所有连接关闭（通过context取消触发）
-	// wg.Wait()
+	
+	// 给一点时间让event loop处理完最后的请求
+	// context取消后，event loop会自动停止
+	time.Sleep(200 * time.Millisecond)
+	
 	fmt.Println("wg.Wait()")
 
 	// 计算最终结果

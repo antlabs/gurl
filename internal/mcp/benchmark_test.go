@@ -2,6 +2,9 @@ package mcp
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -47,10 +50,23 @@ func TestFormatDuration(t *testing.T) {
 }
 
 func TestHandleBenchmark(t *testing.T) {
-	// Skip this test in CI environment or when no test server is available
-	if testing.Short() {
-		t.Skip("Skipping test that requires external service in short mode")
-	}
+	// Create a mock HTTP server
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Verify request method
+		if r.Method != "POST" {
+			t.Errorf("Expected POST request, got %s", r.Method)
+		}
+		
+		// Verify Content-Type header
+		if ct := r.Header.Get("Content-Type"); ct != "application/json" {
+			t.Errorf("Expected Content-Type: application/json, got %s", ct)
+		}
+		
+		// Send a successful response
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, `{"status": "success", "message": "Token generated"}`)
+	}))
+	defer mockServer.Close()
 
 	// Create a test server instance
 	server := &Server{}
@@ -60,16 +76,17 @@ func TestHandleBenchmark(t *testing.T) {
 			Name: "gurl.benchmark",
 			Arguments: map[string]any{
 				"body":        "{\"userId\": \"x\", \"username\": \"y\", \"tokenExpireTime\": \"72h\", \"refreshTokenExpireTime\": \"720h\", \"clientType\": \"admin\"}",
-				"connections": 50,
-				"duration":    "10s",
+				"connections": 2,
+				"duration":    "200ms",
 				"headers": map[string]any{
 					"Content-Type": "application/json",
 				},
-				"latency": true,
-				"method":  "POST",
-				"threads": 10,
-				"url":     "http://127.0.0.1:80/api/v1/token/generate",
-				"verbose": true,
+				"latency":     true,
+				"method":      "POST",
+				"threads":     1,
+				"url":         mockServer.URL + "/api/v1/token/generate",
+				"verbose":     false,
+				"use_nethttp": true, // Use nethttp for reliable testing
 			},
 		},
 	}
@@ -80,39 +97,39 @@ func TestHandleBenchmark(t *testing.T) {
 	// Call the function under test
 	result, err := server.handleBenchmark(ctx, req)
 
-	// If no error (target is available), verify the result structure
-	if err == nil {
-		if result == nil {
-			t.Error("handleBenchmark() returned nil result without error")
-			return
-		}
-
-		if len(result.Content) == 0 {
-			t.Error("handleBenchmark() returned empty content")
-			return
-		}
-
-		// Verify the content is text content
-		textContent, ok := result.Content[0].(*mcp.TextContent)
-		if !ok {
-			t.Error("handleBenchmark() did not return TextContent")
-			return
-		}
-
-		if textContent.Text == "" {
-			t.Error("handleBenchmark() returned empty text content")
-			return
-		}
-
-		t.Logf("Benchmark result: %s", textContent.Text)
-	} else {
-		t.Logf("Expected error due to unavailable target: %v", err)
+	// Verify no error
+	if err != nil {
+		t.Fatalf("handleBenchmark() returned error: %v", err)
 	}
+
+	if result == nil {
+		t.Fatal("handleBenchmark() returned nil result without error")
+	}
+
+	if len(result.Content) == 0 {
+		t.Fatal("handleBenchmark() returned empty content")
+	}
+
+	// Verify the content is text content
+	textContent, ok := result.Content[0].(*mcp.TextContent)
+	if !ok {
+		t.Fatal("handleBenchmark() did not return TextContent")
+	}
+
+	if textContent.Text == "" {
+		t.Fatal("handleBenchmark() returned empty text content")
+	}
+
+	t.Logf("Benchmark result: %s", textContent.Text)
 }
 
 func TestHandleBenchmarkParameterParsing(t *testing.T) {
-	// This test focuses on parameter parsing without actually running the benchmark
-	// We'll test with a very short duration to minimize impact if it does run
+	// Create a mock HTTP server
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, `{"status": "ok"}`)
+	}))
+	defer mockServer.Close()
 
 	// Create a test server instance
 	server := &Server{}
@@ -123,17 +140,18 @@ func TestHandleBenchmarkParameterParsing(t *testing.T) {
 			Name: "gurl.benchmark",
 			Arguments: map[string]any{
 				"body":        "{\n    \"userId\": \"x\",\n    \"username\": \"y\",\n    \"tokenExpireTime\": \"72h\",\n    \"refreshTokenExpireTime\": \"720h\",\n    \"clientType\": \"admin\"\n}",
-				"connections": 1,     // Minimal connections
-				"duration":    "1ms", // Very short duration
+				"connections": 1,       // Minimal connections
+				"duration":    "200ms", // Short duration
 				"headers": map[string]any{
 					"Content-Type": "application/json",
 				},
-				"latency": true,
-				"method":  "POST",
-				"rate":    1,                         // Low rate
-				"threads": 1,                         // Single thread
-				"url":     "http://httpbin.org/post", // Use a reliable test endpoint
-				"verbose": false,                     // Reduce output
+				"latency":     true,
+				"method":      "POST",
+				"rate":        5,              // Low rate
+				"threads":     1,              // Single thread
+				"url":         mockServer.URL, // Use local mock server
+				"verbose":     false,          // Reduce output
+				"use_nethttp": true,           // Use nethttp for comparison
 			},
 		},
 	}
