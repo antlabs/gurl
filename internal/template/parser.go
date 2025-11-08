@@ -37,13 +37,8 @@ func (tp *TemplateParser) GetContext() *VariableContext {
 
 // Template variable patterns
 var (
-	// {{.variable}} or {{variable}}
-	variablePattern = regexp.MustCompile(`\{\{\.?([a-zA-Z_][a-zA-Z0-9_]*)\}\}`)
-	
-	// {{.function:params}} or {{function:params}}
-	functionPattern = regexp.MustCompile(`\{\{\.?([a-zA-Z_][a-zA-Z0-9_]*):([^}]*)\}\}`)
-	
 	// Combined pattern for all template variables
+	// Matches {{.variable}}, {{variable}}, {{.function:params}}, or {{function:params}}
 	templatePattern = regexp.MustCompile(`\{\{\.?([a-zA-Z_][a-zA-Z0-9_]*)(?::([^}]*))?\}\}`)
 )
 

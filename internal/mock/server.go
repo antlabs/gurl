@@ -123,7 +123,9 @@ func (s *Server) createRouteHandler(route RouteConfig) http.HandlerFunc {
 		// 自定义响应
 		if route.Response != "" {
 			w.Header().Set("Content-Type", "application/json")
-			fmt.Fprint(w, route.Response)
+			if _, err := fmt.Fprint(w, route.Response); err != nil {
+				log.Printf("Error writing response: %v", err)
+			}
 			return
 		}
 
@@ -147,7 +149,9 @@ func (s *Server) defaultHandler(w http.ResponseWriter, r *http.Request) {
 	// 如果有自定义响应，使用它
 	if s.config.Response != "" {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, s.config.Response)
+		if _, err := fmt.Fprint(w, s.config.Response); err != nil {
+			log.Printf("Error writing response: %v", err)
+		}
 		return
 	}
 
@@ -161,7 +165,11 @@ func (s *Server) echoRequest(w http.ResponseWriter, r *http.Request) {
 
 	// 读取请求体
 	body, _ := io.ReadAll(r.Body)
-	defer r.Body.Close()
+	defer func() {
+		if err := r.Body.Close(); err != nil {
+			log.Printf("Error closing request body: %v", err)
+		}
+	}()
 
 	// 构建响应
 	response := map[string]interface{}{
@@ -172,7 +180,9 @@ func (s *Server) echoRequest(w http.ResponseWriter, r *http.Request) {
 		"body":    string(body),
 	}
 
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("Error encoding response: %v", err)
+	}
 }
 
 // defaultResponse provides a default JSON response
@@ -186,7 +196,9 @@ func (s *Server) defaultResponse(w http.ResponseWriter, r *http.Request, statusC
 		"method":  r.Method,
 	}
 
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("Error encoding response: %v", err)
+	}
 }
 
 // Stop stops the mock server

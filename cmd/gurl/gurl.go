@@ -321,7 +321,9 @@ func runMockServer(args *Args) error {
 	go func() {
 		<-sigChan
 		fmt.Println("\nShutting down mock server...")
-		server.Stop()
+		if err := server.Stop(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error stopping server: %v\n", err)
+		}
 		os.Exit(0)
 	}()
 
@@ -332,7 +334,10 @@ func runMockServer(args *Args) error {
 func main() {
 	args := &Args{}
 
-	clop.Bind(args)
+	if err := clop.Bind(args); err != nil {
+		fmt.Fprintf(os.Stderr, "Error parsing arguments: %v\n", err)
+		os.Exit(1)
+	}
 
 	// 检查是否启动 Mock 服务器
 	if args.MockServer {

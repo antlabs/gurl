@@ -44,11 +44,11 @@ func (r *Reporter) GenerateReport(result *BatchResult) string {
 		report.WriteString(fmt.Sprintf("   Duration: %v\n", test.Duration))
 		
 		if test.Error != nil {
-			report.WriteString(fmt.Sprintf("   Status: FAILED\n"))
+			report.WriteString("   Status: FAILED\n")
 			report.WriteString(fmt.Sprintf("   Error: %v\n", test.Error))
 			failedCount++
 		} else {
-			report.WriteString(fmt.Sprintf("   Status: SUCCESS\n"))
+			report.WriteString("   Status: SUCCESS\n")
 			if test.Stats != nil {
 				report.WriteString(fmt.Sprintf("   Requests: %d\n", test.Stats.TotalRequests))
 				rps := float64(test.Stats.TotalRequests) / test.Stats.Duration.Seconds()
@@ -100,7 +100,7 @@ func (r *Reporter) GenerateReport(result *BatchResult) string {
 			minLatency := latencies[0]
 			maxLatency := latencies[len(latencies)-1]
 			
-			report.WriteString(fmt.Sprintf("Latency Stats:\n"))
+			report.WriteString("Latency Stats:\n")
 			report.WriteString(fmt.Sprintf("  Average: %v\n", avgLatency))
 			report.WriteString(fmt.Sprintf("  Median:  %v\n", medianLatency))
 			report.WriteString(fmt.Sprintf("  Min:     %v\n", minLatency))

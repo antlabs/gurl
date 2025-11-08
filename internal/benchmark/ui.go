@@ -26,7 +26,6 @@ type LiveUI struct {
 	totalRequests    int64
 	reqPerSecond     []int64
 	statusCodes      map[int]int64
-	latencies        []time.Duration
 	endpointStats    map[string]*EndpointLiveStats  // 新增：端点实时统计
 	
 	startTime        time.Time
