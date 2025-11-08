@@ -8,7 +8,7 @@ require (
 	github.com/antlabs/pulse v0.0.0-20250721174527-2b6b1a690c78
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/google/uuid v1.6.0
-	github.com/guonaihong/clop v0.2.4
+	github.com/guonaihong/clop v0.2.12
 	github.com/mark3labs/mcp-go v0.38.0
 	go.uber.org/ratelimit v0.3.1
 	gopkg.in/yaml.v3 v3.0.1
