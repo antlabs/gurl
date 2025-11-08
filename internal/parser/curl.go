@@ -16,12 +16,12 @@ func ParseCurl(curlCommand string) (*http.Request, error) {
 
 // BuildRequest builds an http.Request from config and URL
 func BuildRequest(cfg config.Config, targetURL *url.URL) (*http.Request, error) {
-	var body strings.Reader
+	var bodyReader *strings.Reader
 	if cfg.Body != "" {
-		body = *strings.NewReader(cfg.Body)
+		bodyReader = strings.NewReader(cfg.Body)
 	}
 
-	req, err := http.NewRequest(strings.ToUpper(cfg.Method), targetURL.String(), &body)
+	req, err := http.NewRequest(strings.ToUpper(cfg.Method), targetURL.String(), bodyReader)
 	if err != nil {
 		return nil, err
 	}

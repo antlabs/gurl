@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -22,7 +23,8 @@ type Runner interface {
 type NetHTTPBenchmark struct {
 	config      config.Config
 	request     *http.Request
-	requestPool *RequestPool // 多请求池
+	bodyContent string        // 存储请求体内容，用于每次创建新的 Body
+	requestPool *RequestPool  // 多请求池
 	client      *http.Client
 	rateLimiter ratelimit.Limiter // Uber 限流器
 }
@@ -45,9 +47,20 @@ func NewNetHTTPBenchmark(cfg config.Config, req *http.Request) *NetHTTPBenchmark
 		limiter = ratelimit.New(cfg.Rate) // 每秒请求数
 	}
 
+	// 读取并保存 body 内容
+	var bodyContent string
+	if req.Body != nil {
+		bodyBytes, _ := io.ReadAll(req.Body)
+		req.Body.Close()
+		bodyContent = string(bodyBytes)
+		// 重新设置 Body 以便第一次使用
+		req.Body = io.NopCloser(strings.NewReader(bodyContent))
+	}
+
 	return &NetHTTPBenchmark{
 		config:      cfg,
 		request:     req,
+		bodyContent: bodyContent,
 		requestPool: nil, // 单请求模式
 		client:      client,
 		rateLimiter: limiter,
@@ -258,9 +271,15 @@ func (b *NetHTTPBenchmark) runConnection(ctx context.Context, requestCount, erro
 			req = b.request
 		}
 
+		// 克隆请求并创建新的 Body（避免数据竞争）
+		clonedReq := req.Clone(ctx)
+		if b.bodyContent != "" {
+			clonedReq.Body = io.NopCloser(strings.NewReader(b.bodyContent))
+		}
+
 		// 执行请求
 		start := time.Now()
-		resp, err := b.client.Do(req.Clone(ctx))
+		resp, err := b.client.Do(clonedReq)
 		duration := time.Since(start)
 
 		atomic.AddInt64(requestCount, 1)
