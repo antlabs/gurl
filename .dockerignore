@@ -1,0 +1,37 @@
+# Git
+.git
+.gitignore
+
+# Build artifacts
+build/
+*.exe
+*.dll
+*.so
+*.dylib
+gurl
+
+# Test files
+*.test
+*.out
+coverage.out
+coverage.html
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# CI/CD
+.github/
+
+# Other
+testdata/
+examples/
+plan/

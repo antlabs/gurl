@@ -1,0 +1,88 @@
+name: Pull Request
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  validate:
+    name: Validate PR
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.24.x'
+        cache: true
+
+    - name: Check formatting
+      run: |
+        if [ -n "$(gofmt -l .)" ]; then
+          echo "Go code is not formatted:"
+          gofmt -d .
+          exit 1
+        fi
+
+    - name: Check go mod tidy
+      run: |
+        go mod tidy
+        git diff --exit-code go.mod go.sum
+
+    - name: Run tests with race detector
+      run: go test -v -race ./...
+
+    - name: Run benchmarks
+      run: go test -bench=. -benchmem ./... -run=^$
+
+    - name: Build
+      run: make build
+
+  size-check:
+    name: Binary Size Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.24.x'
+        cache: true
+
+    - name: Build binary
+      run: make build
+
+    - name: Check binary size
+      run: |
+        SIZE=$(stat -f%z build/gurl 2>/dev/null || stat -c%s build/gurl)
+        echo "Binary size: $SIZE bytes ($(numfmt --to=iec-i --suffix=B $SIZE))"
+        # Warn if binary is larger than 50MB
+        if [ $SIZE -gt 52428800 ]; then
+          echo "::warning::Binary size is larger than 50MB"
+        fi
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Gosec Security Scanner
+      uses: securego/gosec@master
+      with:
+        args: '-no-fail -fmt sarif -out results.sarif ./...'
+
+    - name: Upload SARIF file
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: results.sarif

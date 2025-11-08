@@ -1,5 +1,11 @@
 # gurl
 
+[![CI](https://github.com/antlabs/gurl/actions/workflows/ci.yml/badge.svg)](https://github.com/antlabs/gurl/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/antlabs/gurl/actions/workflows/codeql.yml/badge.svg)](https://github.com/antlabs/gurl/actions/workflows/codeql.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/antlabs/gurl)](https://goreportcard.com/report/github.com/antlabs/gurl)
+[![License](https://img.shields.io/github/license/antlabs/gurl)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/antlabs/gurl)](https://github.com/antlabs/gurl/releases)
+
 **gurl** = **g**o + **curl** + wr**k**
 
 A modern, high-performance HTTP benchmarking tool written in Go, inspired by **wrk**, with native support for parsing **curl** commands.  
