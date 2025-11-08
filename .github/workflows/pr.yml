@@ -35,7 +35,7 @@ jobs:
         git diff --exit-code go.mod go.sum
 
     - name: Run tests with race detector
-      run: go test -v -race ./...
+      run: go test -v -short -race ./...
 
     - name: Run benchmarks
       run: go test -bench=. -benchmem ./... -run=^$

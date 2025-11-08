@@ -47,6 +47,11 @@ func TestFormatDuration(t *testing.T) {
 }
 
 func TestHandleBenchmark(t *testing.T) {
+	// Skip this test in CI environment or when no test server is available
+	if testing.Short() {
+		t.Skip("Skipping test that requires external service in short mode")
+	}
+
 	// Create a test server instance
 	server := &Server{}
 	// Create test request with the specified parameters

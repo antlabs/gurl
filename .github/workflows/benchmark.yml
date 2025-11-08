@@ -23,7 +23,8 @@ jobs:
 
     - name: Run benchmarks
       run: |
-        go test -bench=. -benchmem -benchtime=5s ./... | tee benchmark.txt
+        # Run benchmarks, skip regular tests that require external services
+        go test -short -bench=. -benchmem -benchtime=5s -run=^$ ./... | tee benchmark.txt
 
     - name: Store benchmark result
       uses: benchmark-action/github-action-benchmark@v1
