@@ -64,7 +64,7 @@ func TestHandleBenchmark(t *testing.T) {
 		
 		// Send a successful response
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, `{"status": "success", "message": "Token generated"}`)
+		_, _ = fmt.Fprintf(w, `{"status": "success", "message": "Token generated"}`)
 	}))
 	defer mockServer.Close()
 
@@ -127,7 +127,7 @@ func TestHandleBenchmarkParameterParsing(t *testing.T) {
 	// Create a mock HTTP server
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, `{"status": "ok"}`)
+		_, _ = fmt.Fprintf(w, `{"status": "ok"}`)
 	}))
 	defer mockServer.Close()
 

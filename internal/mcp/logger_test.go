@@ -18,9 +18,9 @@ func TestLoggerWithDebugFile(t *testing.T) {
 	defer func() {
 		// Restore original environment
 		if originalEnv == "" {
-			os.Unsetenv("GURL_MCP_DEBUG_LOG")
+			_ = os.Unsetenv("GURL_MCP_DEBUG_LOG")
 		} else {
-			os.Setenv("GURL_MCP_DEBUG_LOG", originalEnv)
+			_ = os.Setenv("GURL_MCP_DEBUG_LOG", originalEnv)
 		}
 	}()
 	
@@ -100,7 +100,7 @@ func TestLoggerEnvironmentVariableHandling(t *testing.T) {
 			
 			// Clean up any existing file
 			if tt.envValue != "" {
-				os.RemoveAll(filepath.Dir(tt.envValue))
+				_ = os.RemoveAll(filepath.Dir(tt.envValue))
 			}
 		})
 	}
@@ -133,7 +133,7 @@ func TestLoggerDirectoryCreation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create log file: %v", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 	
 	// Write a test message
 	_, err = file.WriteString("Test log entry\n")

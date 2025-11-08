@@ -18,7 +18,7 @@ func TestMCPServerIntegration(t *testing.T) {
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, `{"status": "ok"}`)
+		_, _ = fmt.Fprintf(w, `{"status": "ok"}`)
 	}))
 	defer mockServer.Close()
 	

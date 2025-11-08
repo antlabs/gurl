@@ -19,12 +19,12 @@ func TestHandleHTTPRequest(t *testing.T) {
 		case "/get":
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprintf(w, `{"method": "GET", "url": "%s"}`, r.URL.String())
+			_, _ = fmt.Fprintf(w, `{"method": "GET", "url": "%s"}`, r.URL.String())
 		case "/post":
 			body, _ := io.ReadAll(r.Body)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprintf(w, `{"method": "POST", "body": %s}`, string(body))
+			_, _ = fmt.Fprintf(w, `{"method": "POST", "body": %s}`, string(body))
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}

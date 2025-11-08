@@ -274,7 +274,7 @@ func (b *NetHTTPBenchmark) runConnection(ctx context.Context, requestCount, erro
 		} else {
 			// 读取并丢弃响应体数据，计算字节数
 			bytesRead, _ = io.Copy(io.Discard, resp.Body)
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			statusCode = resp.StatusCode
 
 			results.AddLatency(duration)

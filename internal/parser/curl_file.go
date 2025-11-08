@@ -16,7 +16,7 @@ func ParseCurlFile(filePath string) ([]*http.Request, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open curl file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var requests []*http.Request
 	scanner := bufio.NewScanner(file)

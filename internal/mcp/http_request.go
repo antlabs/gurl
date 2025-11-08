@@ -87,7 +87,7 @@ func (s *Server) handleHTTPRequest(ctx context.Context, req mcp.CallToolRequest)
 		Logger.Printf("Request failed: %v", err)
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Read response body
 	bodyBytes, err := io.ReadAll(resp.Body)

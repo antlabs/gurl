@@ -15,7 +15,7 @@ func BenchmarkNetHTTPClient(b *testing.B) {
 	// 创建mock服务器
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		_, _ = w.Write([]byte("OK"))
 	}))
 	defer mockServer.Close()
 
