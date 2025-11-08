@@ -3,7 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -83,7 +83,7 @@ func (bt *BatchTest) ToConfig(defaults *Config) (*Config, error) {
 
 // LoadBatchConfig loads batch configuration from file
 func LoadBatchConfig(filename string) (*BatchConfig, error) {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file: %v", err)
 	}

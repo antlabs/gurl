@@ -231,10 +231,8 @@ var httpParserSetting = httparser.Setting{
 				// r.body = append(r.body, buf...)
 				r.contentLength += int64(len(buf))
 				// 检查body大小限制（例如1MB）
-				if r.contentLength > 1<<20 {
-					// 超过限制，记录错误并关闭连接
-					// 这里可以通过设置标志位在OnData中处理
-				}
+				// TODO: 实现body大小限制处理逻辑
+				_ = r.contentLength // 暂时忽略大小检查
 			}
 		}
 	},
