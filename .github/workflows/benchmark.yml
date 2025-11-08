@@ -35,11 +35,14 @@ jobs:
     - name: Store benchmark result
       uses: benchmark-action/github-action-benchmark@v1
       if: github.event_name == 'push'
+      continue-on-error: true
       with:
         tool: 'go'
         output-file-path: benchmark.txt
         github-token: ${{ secrets.GITHUB_TOKEN }}
         auto-push: true
+        gh-pages-branch: gh-pages
+        benchmark-data-dir-path: dev/bench
         alert-threshold: '150%'
         comment-on-alert: true
         fail-on-alert: false
