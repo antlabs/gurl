@@ -57,7 +57,7 @@ func (e *Executor) Execute(ctx context.Context, batchConfig *config.BatchConfig,
 	}
 
 	startTime := time.Now()
-	
+
 	// Create semaphore to limit concurrency
 	sem := make(chan struct{}, e.maxConcurrency)
 	var wg sync.WaitGroup
@@ -72,7 +72,7 @@ func (e *Executor) Execute(ctx context.Context, batchConfig *config.BatchConfig,
 		wg.Add(1)
 		go func(index int, batchTest config.BatchTest) {
 			defer wg.Done()
-			
+
 			// Acquire semaphore
 			sem <- struct{}{}
 			defer func() { <-sem }()
@@ -115,7 +115,7 @@ func (e *Executor) Execute(ctx context.Context, batchConfig *config.BatchConfig,
 // executeTest runs a single test
 func (e *Executor) executeTest(ctx context.Context, batchTest *config.BatchTest, defaults *config.Config) TestResult {
 	startTime := time.Now()
-	
+
 	result := TestResult{
 		Name:      batchTest.Name,
 		StartTime: startTime,

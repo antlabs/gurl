@@ -55,14 +55,14 @@ func (tp *TemplateParser) ParseTemplate(template string) (string, error) {
 	}
 
 	result := template
-	
+
 	// Process each match
 	for _, match := range matches {
-		fullMatch := match[0]  // {{.variable}} or {{.function:params}}
-		varName := match[1]    // variable or function name
+		fullMatch := match[0] // {{.variable}} or {{.function:params}}
+		varName := match[1]   // variable or function name
 		params := ""
 		if len(match) > 2 {
-			params = match[2]   // parameters (if any)
+			params = match[2] // parameters (if any)
 		}
 
 		// Generate value for this variable
@@ -121,7 +121,7 @@ func (tp *TemplateParser) ValidateTemplate(template string) error {
 	}
 
 	matches := templatePattern.FindAllStringSubmatch(template, -1)
-	
+
 	for _, match := range matches {
 		varName := match[1]
 		params := ""
@@ -168,7 +168,7 @@ func (tp *TemplateParser) validateBuiltinParams(funcName, params string) error {
 			}
 		}
 		// Additional validation could be added here
-		
+
 	case "sequence":
 		if params != "" {
 			// Validate that params is a number
@@ -176,7 +176,7 @@ func (tp *TemplateParser) validateBuiltinParams(funcName, params string) error {
 				return fmt.Errorf("sequence start value must be a number")
 			}
 		}
-		
+
 	case "choice":
 		if params == "" {
 			return fmt.Errorf("choice function requires options")
@@ -184,10 +184,10 @@ func (tp *TemplateParser) validateBuiltinParams(funcName, params string) error {
 		if !strings.Contains(params, ",") && strings.TrimSpace(params) == "" {
 			return fmt.Errorf("choice function requires at least one option")
 		}
-		
+
 	case "timestamp", "now":
 		// Most timestamp formats are valid, so we don't validate strictly
-		
+
 	case "uuid":
 		// UUID doesn't take parameters
 		if params != "" {
@@ -201,10 +201,10 @@ func (tp *TemplateParser) validateBuiltinParams(funcName, params string) error {
 // ExtractVariables extracts all variable names from a template string
 func (tp *TemplateParser) ExtractVariables(template string) []string {
 	matches := templatePattern.FindAllStringSubmatch(template, -1)
-	
+
 	var variables []string
 	seen := make(map[string]bool)
-	
+
 	for _, match := range matches {
 		varName := match[1]
 		if !seen[varName] {
@@ -212,26 +212,26 @@ func (tp *TemplateParser) ExtractVariables(template string) []string {
 			seen[varName] = true
 		}
 	}
-	
+
 	return variables
 }
 
 // ReplaceVariables replaces template variables with provided values
 func (tp *TemplateParser) ReplaceVariables(template string, values map[string]string) string {
 	result := template
-	
+
 	for varName, value := range values {
 		// Replace both {{.variable}} and {{variable}} patterns
 		patterns := []string{
 			fmt.Sprintf("{{.%s}}", varName),
 			fmt.Sprintf("{{%s}}", varName),
 		}
-		
+
 		for _, pattern := range patterns {
 			result = strings.ReplaceAll(result, pattern, value)
 		}
 	}
-	
+
 	return result
 }
 
@@ -242,40 +242,40 @@ func ParseVariableDefinition(definition string) (name, varType, params string, e
 	if len(parts) != 2 {
 		return "", "", "", fmt.Errorf("invalid variable definition format: %s (expected name=definition)", definition)
 	}
-	
+
 	name = strings.TrimSpace(parts[0])
 	if name == "" {
 		return "", "", "", fmt.Errorf("variable name cannot be empty")
 	}
-	
+
 	defParts := strings.SplitN(parts[1], ":", 2)
 	varType = strings.TrimSpace(defParts[0])
 	if len(defParts) > 1 {
 		params = strings.TrimSpace(defParts[1])
 	}
-	
+
 	return name, varType, params, nil
 }
 
 // ParseVariableDefinitions parses multiple variable definitions
 func ParseVariableDefinitions(definitions []string) (*VariableContext, error) {
 	context := NewVariableContext()
-	
+
 	for _, def := range definitions {
 		name, varType, params, err := ParseVariableDefinition(def)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse variable definition '%s': %v", def, err)
 		}
-		
+
 		// Construct the full definition
 		fullDef := varType
 		if params != "" {
 			fullDef = fmt.Sprintf("%s:%s", varType, params)
 		}
-		
+
 		context.SetVariable(name, fullDef)
 	}
-	
+
 	return context, nil
 }
 

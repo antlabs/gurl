@@ -17,19 +17,19 @@ func (s *Server) handleBatchTest(ctx context.Context, req mcp.CallToolRequest) (
 			Logger.Printf("Panic in handleBatchTest: %v", r)
 		}
 	}()
-	
+
 	// Parse arguments
 	batchConfigPath := mcp.ParseString(req, "config", "")
 	inlineTests := mcp.ParseArgument(req, "tests", []any{})
 	verbose := mcp.ParseBoolean(req, "verbose", false)
 	maxConcurrency := mcp.ParseInt(req, "concurrency", 3)
-	
+
 	// Check if either config file or inline tests are provided
 	if batchConfigPath == "" && len(inlineTests.([]any)) == 0 {
 		Logger.Printf("Either config file path or inline tests are required")
 		return nil, fmt.Errorf("either config file path or inline tests are required")
 	}
-	
+
 	// Create default config
 	defaults := &config.Config{
 		Connections: 10,
@@ -74,7 +74,7 @@ func (s *Server) handleBatchTest(ctx context.Context, req mcp.CallToolRequest) (
 		Logger.Printf("Batch test failed: %v", err)
 		return nil, fmt.Errorf("batch test failed: %w", err)
 	}
-	
+
 	Logger.Printf("Batch tests completed successfully")
 
 	// Generate report

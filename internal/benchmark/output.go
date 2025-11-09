@@ -77,19 +77,19 @@ func PrintResults(results *stats.Results, cfg config.Config) {
 
 	fmt.Printf("Requests/sec: %8.2f\n", qps)
 	fmt.Printf("Transfer/sec: %8s\n", formatBytes(int64(float64(results.GetTotalBytes())/results.Duration.Seconds())))
-	
+
 	// 打印每个端点的统计（如果有多个端点）
 	endpointStats := results.GetEndpointStats()
 	if len(endpointStats) > 1 {
 		fmt.Printf("\n=== Per-Endpoint Statistics ===\n")
-		
+
 		// 按 URL 排序以保持输出一致性
 		urls := make([]string, 0, len(endpointStats))
 		for url := range endpointStats {
 			urls = append(urls, url)
 		}
 		sort.Strings(urls)
-		
+
 		for _, url := range urls {
 			stats := endpointStats[url]
 			printEndpointStats(stats, results.Duration)
@@ -100,18 +100,18 @@ func PrintResults(results *stats.Results, cfg config.Config) {
 // printEndpointStats prints statistics for a single endpoint
 func printEndpointStats(stats *stats.EndpointStats, duration time.Duration) {
 	fmt.Printf("\n[%s]\n", stats.URL)
-	
+
 	// 基本统计
 	fmt.Printf("  Requests:     %d\n", stats.Requests)
 	if stats.Errors > 0 {
 		errorRate := float64(stats.Errors) / float64(stats.Requests) * 100
 		fmt.Printf("  Errors:       %d (%.1f%%)\n", stats.Errors, errorRate)
 	}
-	
+
 	// TPS
 	tps := float64(stats.Requests) / duration.Seconds()
 	fmt.Printf("  Requests/sec: %.2f\n", tps)
-	
+
 	// 延迟统计
 	if len(stats.Latencies) > 0 {
 		avgLatency := stats.GetAverageLatency()
@@ -120,7 +120,7 @@ func printEndpointStats(stats *stats.EndpointStats, duration time.Duration) {
 			formatDuration(stats.MinLatency),
 			formatDuration(stats.MaxLatency))
 	}
-	
+
 	// 状态码分布
 	if len(stats.StatusCodes) > 0 {
 		fmt.Printf("  Status codes: ")
@@ -135,7 +135,7 @@ func printEndpointStats(stats *stats.EndpointStats, duration time.Duration) {
 		}
 		fmt.Printf("\n")
 	}
-	
+
 	// 数据传输
 	if stats.TotalBytes > 0 {
 		fmt.Printf("  Data:         %s total, %s/sec\n",

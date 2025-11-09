@@ -16,9 +16,9 @@ func TestLoggerWithDebugFile(t *testing.T) {
 		t.Skipf("Cannot create temp directory: %v", err)
 	}
 	defer os.RemoveAll(tempDir)
-	
+
 	logFile := filepath.Join(tempDir, "test-debug.log")
-	
+
 	// Set the environment variable
 	originalEnv := os.Getenv("GURL_MCP_DEBUG_LOG")
 	defer func() {
@@ -29,40 +29,40 @@ func TestLoggerWithDebugFile(t *testing.T) {
 			_ = os.Setenv("GURL_MCP_DEBUG_LOG", originalEnv)
 		}
 	}()
-	
+
 	// Set the debug log file
 	err = os.Setenv("GURL_MCP_DEBUG_LOG", logFile)
 	if err != nil {
 		t.Fatalf("Failed to set environment variable: %v", err)
 	}
-	
+
 	// Note: We can't easily test the init() function directly since it runs once per package
 	// But we can test the logging functionality by writing to the current logger
-	
+
 	// Write a test message
 	testMessage := "Test debug message " + time.Now().Format("15:04:05")
 	Logger.Printf("Testing debug log functionality: %s", testMessage)
-	
+
 	// Give it a moment to write
 	time.Sleep(100 * time.Millisecond)
-	
+
 	// Check if the log file was created and contains our message
 	if _, err := os.Stat(logFile); os.IsNotExist(err) {
 		t.Logf("Log file was not created at %s (this is expected if logger was already initialized)", logFile)
 		return
 	}
-	
+
 	// Read the log file content
 	content, err := os.ReadFile(logFile)
 	if err != nil {
 		t.Fatalf("Failed to read log file: %v", err)
 	}
-	
+
 	contentStr := string(content)
 	if !strings.Contains(contentStr, "gurl-mcp") {
 		t.Errorf("Log file should contain '[gurl-mcp]' prefix, got: %s", contentStr)
 	}
-	
+
 	t.Logf("Log file content: %s", contentStr)
 }
 
@@ -98,12 +98,12 @@ func TestLoggerEnvironmentVariableHandling(t *testing.T) {
 			description: "Should handle relative paths",
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Logf("Testing environment variable: '%s'", tt.envValue)
 			t.Logf("Description: %s", tt.description)
-			
+
 			// Clean up any existing file
 			if tt.envValue != "" {
 				_ = os.RemoveAll(filepath.Dir(tt.envValue))
@@ -120,45 +120,45 @@ func TestLoggerDirectoryCreation(t *testing.T) {
 		t.Skipf("Cannot create temp directory: %v (this may happen in restricted environments)", err)
 	}
 	defer os.RemoveAll(tempDir)
-	
+
 	nestedLogFile := filepath.Join(tempDir, "nested", "deep", "debug.log")
-	
+
 	// Verify the directory doesn't exist initially
 	if _, err := os.Stat(filepath.Dir(nestedLogFile)); !os.IsNotExist(err) {
 		t.Fatalf("Directory should not exist initially")
 	}
-	
+
 	// Simulate what the init function does
 	dir := filepath.Dir(nestedLogFile)
 	err = os.MkdirAll(dir, 0755)
 	if err != nil {
 		t.Fatalf("Failed to create directory: %v", err)
 	}
-	
+
 	// Verify the directory was created
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		t.Fatalf("Directory should exist after MkdirAll")
 	}
-	
+
 	// Test file creation
 	file, err := os.OpenFile(nestedLogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		t.Fatalf("Failed to create log file: %v", err)
 	}
 	defer func() { _ = file.Close() }()
-	
+
 	// Write a test message
 	_, err = file.WriteString("Test log entry\n")
 	if err != nil {
 		t.Fatalf("Failed to write to log file: %v", err)
 	}
-	
+
 	// Verify file content
 	content, err := os.ReadFile(nestedLogFile)
 	if err != nil {
 		t.Fatalf("Failed to read log file: %v", err)
 	}
-	
+
 	if !strings.Contains(string(content), "Test log entry") {
 		t.Errorf("Log file should contain test message, got: %s", string(content))
 	}

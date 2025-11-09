@@ -19,15 +19,15 @@ type BatchConfig struct {
 
 // BatchTest represents a single test in the batch
 type BatchTest struct {
-	Name        string        `yaml:"name" json:"name"`
-	Curl        string        `yaml:"curl" json:"curl"`
-	Connections int           `yaml:"connections,omitempty" json:"connections,omitempty"`
-	Duration    string        `yaml:"duration,omitempty" json:"duration,omitempty"`
-	Threads     int           `yaml:"threads,omitempty" json:"threads,omitempty"`
-	Rate        int           `yaml:"rate,omitempty" json:"rate,omitempty"`
-	Timeout     string        `yaml:"timeout,omitempty" json:"timeout,omitempty"`
-	Verbose     bool          `yaml:"verbose,omitempty" json:"verbose,omitempty"`
-	UseNetHTTP  bool          `yaml:"use_nethttp,omitempty" json:"use_nethttp,omitempty"`
+	Name        string `yaml:"name" json:"name"`
+	Curl        string `yaml:"curl" json:"curl"`
+	Connections int    `yaml:"connections,omitempty" json:"connections,omitempty"`
+	Duration    string `yaml:"duration,omitempty" json:"duration,omitempty"`
+	Threads     int    `yaml:"threads,omitempty" json:"threads,omitempty"`
+	Rate        int    `yaml:"rate,omitempty" json:"rate,omitempty"`
+	Timeout     string `yaml:"timeout,omitempty" json:"timeout,omitempty"`
+	Verbose     bool   `yaml:"verbose,omitempty" json:"verbose,omitempty"`
+	UseNetHTTP  bool   `yaml:"use_nethttp,omitempty" json:"use_nethttp,omitempty"`
 }
 
 // ToConfig converts BatchTest to Config with defaults

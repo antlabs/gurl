@@ -50,18 +50,18 @@ type Args struct {
 	UseNetHTTP bool `clop:"--use-nethttp" usage:"Force use standard library net/http instead of pulse"`
 
 	// 批量测试选项
-	BatchConfig     string `clop:"--batch-config" usage:"Path to batch test configuration file (YAML/JSON)"`
-	BatchConcurrency int   `clop:"--batch-concurrency" usage:"Maximum concurrent batch tests" default:"3"`
-	BatchSequential bool   `clop:"--batch-sequential" usage:"Run batch tests sequentially instead of concurrently"`
-	BatchReport     string `clop:"--batch-report" usage:"Output format for batch report (text|csv|json)" default:"text"`
+	BatchConfig      string `clop:"--batch-config" usage:"Path to batch test configuration file (YAML/JSON)"`
+	BatchConcurrency int    `clop:"--batch-concurrency" usage:"Maximum concurrent batch tests" default:"3"`
+	BatchSequential  bool   `clop:"--batch-sequential" usage:"Run batch tests sequentially instead of concurrently"`
+	BatchReport      string `clop:"--batch-report" usage:"Output format for batch report (text|csv|json)" default:"text"`
 
 	// 模板变量选项
-	Variables    []string `clop:"--var" usage:"Define template variables (format: name=type:params)"`
+	Variables     []string `clop:"--var" usage:"Define template variables (format: name=type:params)"`
 	HelpTemplates bool     `clop:"--help-templates" usage:"Show template variable help and examples"`
 
 	// MCP选项
-	MCP          bool   `clop:"--mcp" usage:"Start as an MCP server"`
-	MCPDebugLog  string `clop:"--mcp-debug-log" usage:"Path to MCP debug log file (only used with --mcp)"`
+	MCP         bool   `clop:"--mcp" usage:"Start as an MCP server"`
+	MCPDebugLog string `clop:"--mcp-debug-log" usage:"Path to MCP debug log file (only used with --mcp)"`
 
 	// Mock服务器选项
 	MockServer     bool   `clop:"--mock-server" usage:"Start a mock HTTP server for testing"`
@@ -197,7 +197,7 @@ func runBenchmark(args *Args) error {
 	// 创建并运行基准测试
 	var bench *benchmark.Benchmark
 	var targetURL string
-	
+
 	if len(requests) > 0 {
 		// 多请求模式
 		bench = benchmark.NewWithMultipleRequests(cfg, requests)
@@ -314,7 +314,7 @@ func runMockServer(args *Args) error {
 
 	// 创建并启动服务器
 	server := mock.NewServer(serverConfig)
-	
+
 	// 处理信号以优雅关闭
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)

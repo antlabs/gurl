@@ -101,7 +101,7 @@ func (vg *VariableGenerator) generateUUID() (string, error) {
 // Format: "unix" for unix timestamp, "rfc3339" for RFC3339 format, or empty for unix
 func (vg *VariableGenerator) generateTimestamp(params string) (string, error) {
 	now := time.Now()
-	
+
 	switch params {
 	case "", "unix":
 		return strconv.FormatInt(now.Unix(), 10), nil
@@ -241,18 +241,18 @@ func (vc *VariableContext) GenerateVariableValue(name string) (string, error) {
 // ListVariables returns all defined variables
 func (vc *VariableContext) ListVariables() map[string]string {
 	result := make(map[string]string)
-	
+
 	// Add user-defined variables
 	for name, def := range vc.variables {
 		result[name] = def
 	}
-	
+
 	// Add predefined variables that aren't overridden
 	for name, def := range PredefinedVariables {
 		if _, exists := result[name]; !exists {
 			result[name] = def
 		}
 	}
-	
+
 	return result
 }

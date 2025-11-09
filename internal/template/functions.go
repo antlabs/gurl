@@ -81,7 +81,7 @@ func GetBuiltinFunctions() []BuiltinFunction {
 // GetFunctionHelp returns help text for a specific function
 func GetFunctionHelp(name string) (string, error) {
 	functions := GetBuiltinFunctions()
-	
+
 	for _, fn := range functions {
 		if fn.Name == name {
 			var help strings.Builder
@@ -95,7 +95,7 @@ func GetFunctionHelp(name string) (string, error) {
 			return help.String(), nil
 		}
 	}
-	
+
 	return "", fmt.Errorf("unknown function: %s", name)
 }
 
@@ -104,13 +104,13 @@ func GetAllFunctionsHelp() string {
 	var help strings.Builder
 	help.WriteString("Built-in Template Functions:\n")
 	help.WriteString("===========================\n\n")
-	
+
 	functions := GetBuiltinFunctions()
 	for i, fn := range functions {
 		if i > 0 {
 			help.WriteString("\n")
 		}
-		
+
 		help.WriteString(fmt.Sprintf("%d. %s\n", i+1, fn.Name))
 		help.WriteString(fmt.Sprintf("   Description: %s\n", fn.Description))
 		help.WriteString(fmt.Sprintf("   Usage: %s\n", fn.Usage))
@@ -119,14 +119,14 @@ func GetAllFunctionsHelp() string {
 			help.WriteString(fmt.Sprintf("     %s\n", example))
 		}
 	}
-	
+
 	help.WriteString("\nTemplate Syntax:\n")
 	help.WriteString("================\n")
 	help.WriteString("- Use {{function}} or {{.function}} for functions without parameters\n")
 	help.WriteString("- Use {{function:params}} or {{.function:params}} for functions with parameters\n")
 	help.WriteString("- Variables can be defined with --var name=type:params\n")
 	help.WriteString("- Variables can be referenced as {{name}} or {{.name}}\n")
-	
+
 	return help.String()
 }
 
@@ -221,27 +221,27 @@ func PrintTemplateExamples() string {
 	var output strings.Builder
 	output.WriteString("Template Usage Examples:\n")
 	output.WriteString("========================\n\n")
-	
+
 	examples := GetTemplateExamples()
 	for i, example := range examples {
 		output.WriteString(fmt.Sprintf("%d. %s\n", i+1, example.Name))
 		output.WriteString(fmt.Sprintf("   Description: %s\n", example.Description))
 		output.WriteString(fmt.Sprintf("   Template: %s\n", example.Template))
-		
+
 		if len(example.Variables) > 0 {
 			output.WriteString("   Variables:\n")
 			for name, def := range example.Variables {
 				output.WriteString(fmt.Sprintf("     --var %s=%s\n", name, def))
 			}
 		}
-		
+
 		output.WriteString(fmt.Sprintf("   Example Output: %s\n", example.Expected))
-		
+
 		if i < len(examples)-1 {
 			output.WriteString("\n")
 		}
 	}
-	
+
 	return output.String()
 }
 

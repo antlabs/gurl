@@ -23,8 +23,8 @@ type Runner interface {
 type NetHTTPBenchmark struct {
 	config      config.Config
 	request     *http.Request
-	bodyContent string        // 存储请求体内容，用于每次创建新的 Body
-	requestPool *RequestPool  // 多请求池
+	bodyContent string       // 存储请求体内容，用于每次创建新的 Body
+	requestPool *RequestPool // 多请求池
 	client      *http.Client
 	rateLimiter ratelimit.Limiter // Uber 限流器
 }
@@ -124,13 +124,13 @@ func (b *NetHTTPBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 
 	// 记录开始时间
 	startTime := time.Now()
-	
+
 	// 启动采样 goroutine，每秒记录请求数
 	samplingDone := make(chan struct{})
 	go func() {
 		ticker := time.NewTicker(1 * time.Second)
 		defer ticker.Stop()
-		
+
 		lastCount := int64(0)
 		for {
 			select {
@@ -139,7 +139,7 @@ func (b *NetHTTPBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 				reqThisSecond := currentCount - lastCount
 				results.AddReqPerSecond(reqThisSecond)
 				lastCount = currentCount
-				
+
 				// 更新 Live UI
 				if liveUI != nil {
 					avgLatency := results.GetAverageLatency()
@@ -149,7 +149,7 @@ func (b *NetHTTPBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 					latencyPercentiles := results.GetLatencyPercentiles()
 					errors := atomic.LoadInt64(&errorCount)
 					liveUI.Update(currentCount, reqThisSecond, statusCodes, avgLatency, minLatency, maxLatency, latencyPercentiles, errors)
-					
+
 					// 如果是多端点模式，更新每个端点的统计
 					if b.requestPool != nil {
 						endpointStats := results.GetEndpointStats()
@@ -157,14 +157,14 @@ func (b *NetHTTPBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 						if elapsed == 0 {
 							elapsed = time.Second
 						}
-						
+
 						for url, stats := range endpointStats {
 							reqPerSec := float64(stats.Requests) / elapsed.Seconds()
 							avgLat := stats.GetAverageLatency()
 							liveUI.UpdateEndpointStats(url, stats.Requests, reqPerSec, avgLat, stats.MinLatency, stats.MaxLatency, stats.Errors)
 						}
 					}
-					
+
 					liveUI.Render()
 				}
 			case <-testCtx.Done():
@@ -200,7 +200,7 @@ func (b *NetHTTPBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 
 	// 等待所有工作线程完成
 	wg.Wait()
-	
+
 	// 等待采样完成
 	<-samplingDone
 
@@ -286,7 +286,7 @@ func (b *NetHTTPBenchmark) runConnection(ctx context.Context, requestCount, erro
 
 		var bytesRead int64
 		var statusCode int
-		
+
 		if err != nil {
 			atomic.AddInt64(errorCount, 1)
 			results.AddError(err)
@@ -300,7 +300,7 @@ func (b *NetHTTPBenchmark) runConnection(ctx context.Context, requestCount, erro
 			results.AddStatusCode(statusCode)
 			results.AddBytes(bytesRead)
 		}
-		
+
 		// 如果是多请求模式，记录每个 URL 的统计
 		if b.requestPool != nil {
 			results.AddLatencyWithURL(req.URL.String(), duration, statusCode, bytesRead, err)

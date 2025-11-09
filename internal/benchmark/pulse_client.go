@@ -251,6 +251,8 @@ var httpParserSetting = httparser.Setting{
 func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 	results := stats.NewResults()
 
+	startTime := time.Now()
+	fmt.Printf("PulseBenchmark Run: %v\n", pb.config.Duration)
 	// 创建测试上下文
 	testCtx, cancel := context.WithTimeout(ctx, pb.config.Duration)
 	defer cancel()
@@ -278,10 +280,7 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 	go func() {
 		loop.Serve()
 	}()
-	
-	// 等待event loop启动
-	time.Sleep(50 * time.Millisecond)
-	
+
 	// 建立连接
 	port := pb.target.Port()
 	if port == "" {
@@ -306,19 +305,12 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to register connection: %w", err)
 		}
-		// wg.Add(1)
 	}
 
 	// 等待测试时间结束
 	<-testCtx.Done()
 
-	fmt.Println("testCtx.Done()")
-	
-	// 给一点时间让event loop处理完最后的请求
-	// context取消后，event loop会自动停止
-	time.Sleep(200 * time.Millisecond)
-	
-	fmt.Println("wg.Wait()")
+	fmt.Printf("testCtx.Done():%v\n", time.Since(startTime))
 
 	// 计算最终结果
 	results.TotalRequests = atomic.LoadInt64(&requestCount)

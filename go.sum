@@ -6,8 +6,8 @@ github.com/antlabs/httparser v0.0.11 h1:aV8KDf4PIKfAfiOM474bdrctiZlaFD+9vgMDJmfd
 github.com/antlabs/httparser v0.0.11/go.mod h1:6F22hxlYDhStl6HI822QGB0TUNzOfBpNX5ige0gQrL4=
 github.com/antlabs/pcurl v0.0.10 h1:JoY0dQg7bFizjCQ2hYIqiy9ka06qfPGFlcZuiyPDtR8=
 github.com/antlabs/pcurl v0.0.10/go.mod h1:08JEOd9AdW+BzGpYbkNOPfUw7oDpWVLRn2kdsNdZP0U=
-github.com/antlabs/pulse v0.0.0-20250721174527-2b6b1a690c78 h1:o/BDmDXbe0oXfJQaXBjDJ+c2ArGknw0EUG/ukRDpjBY=
-github.com/antlabs/pulse v0.0.0-20250721174527-2b6b1a690c78/go.mod h1:CR7Uwu/iaQvySMEXk44joshcjkxDS6hRFW8lp8Zq8rg=
+github.com/antlabs/pulse v0.0.0-20250727044511-e31dbf68d422 h1:dGyp/CdGj/4qhjHFS8bNLX4f4W074vk4frQH8ajkt4I=
+github.com/antlabs/pulse v0.0.0-20250727044511-e31dbf68d422/go.mod h1:CR7Uwu/iaQvySMEXk44joshcjkxDS6hRFW8lp8Zq8rg=
 github.com/antlabs/strsim v0.0.2 h1:R4qjokEegYTrw+fkcYj3/UndG9Cn136fH+fpw9TIz9k=
 github.com/antlabs/strsim v0.0.2/go.mod h1:95XAAF2dJK9IiZMc0Ue6H9t477/i6fvYoMoeey8sEnc=
 github.com/antlabs/task v0.0.0-20250706071410-2137462668b9 h1:fNu1p6qI8qGdbmMnxwmsCHPMs6pBm5m3UeCcMkjYSyA=

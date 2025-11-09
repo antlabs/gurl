@@ -9,30 +9,30 @@ import (
 
 // EndpointStats holds statistics for a single endpoint
 type EndpointStats struct {
-	URL          string
-	Requests     int64
-	Errors       int64
-	Latencies    []time.Duration
-	StatusCodes  map[int]int64
-	TotalBytes   int64
-	MinLatency   time.Duration
-	MaxLatency   time.Duration
+	URL         string
+	Requests    int64
+	Errors      int64
+	Latencies   []time.Duration
+	StatusCodes map[int]int64
+	TotalBytes  int64
+	MinLatency  time.Duration
+	MaxLatency  time.Duration
 }
 
 // Results holds benchmark results
 type Results struct {
-	mu            sync.RWMutex
-	latencies     []time.Duration
-	statusCodes   map[int]int64
-	errors        []error
-	totalBytes    int64
-	reqPerSecond  []int64 // 每秒的请求数统计
-	minLatency    time.Duration // 最快响应时间
-	maxLatency    time.Duration // 最慢响应时间
-	
+	mu           sync.RWMutex
+	latencies    []time.Duration
+	statusCodes  map[int]int64
+	errors       []error
+	totalBytes   int64
+	reqPerSecond []int64       // 每秒的请求数统计
+	minLatency   time.Duration // 最快响应时间
+	maxLatency   time.Duration // 最慢响应时间
+
 	// 按 URL 分组的统计
 	endpointStats map[string]*EndpointStats
-	
+
 	TotalRequests int64
 	TotalErrors   int64
 	Duration      time.Duration
@@ -54,7 +54,7 @@ func (r *Results) AddLatency(latency time.Duration) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.latencies = append(r.latencies, latency)
-	
+
 	// 更新最小和最大延迟
 	if r.minLatency == 0 || latency < r.minLatency {
 		r.minLatency = latency
@@ -68,7 +68,7 @@ func (r *Results) AddLatency(latency time.Duration) {
 func (r *Results) AddLatencyWithURL(url string, latency time.Duration, statusCode int, bytes int64, err error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	// 全局统计
 	r.latencies = append(r.latencies, latency)
 	if r.minLatency == 0 || latency < r.minLatency {
@@ -77,7 +77,7 @@ func (r *Results) AddLatencyWithURL(url string, latency time.Duration, statusCod
 	if latency > r.maxLatency {
 		r.maxLatency = latency
 	}
-	
+
 	// 按 URL 统计
 	if r.endpointStats[url] == nil {
 		r.endpointStats[url] = &EndpointStats{
@@ -86,18 +86,18 @@ func (r *Results) AddLatencyWithURL(url string, latency time.Duration, statusCod
 			StatusCodes: make(map[int]int64),
 		}
 	}
-	
+
 	stats := r.endpointStats[url]
 	stats.Requests++
 	stats.Latencies = append(stats.Latencies, latency)
 	stats.TotalBytes += bytes
-	
+
 	if err != nil {
 		stats.Errors++
 	} else {
 		stats.StatusCodes[statusCode]++
 	}
-	
+
 	if stats.MinLatency == 0 || latency < stats.MinLatency {
 		stats.MinLatency = latency
 	}
@@ -131,7 +131,7 @@ func (r *Results) AddBytes(bytes int64) {
 func (r *Results) GetLatencies() []time.Duration {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	latencies := make([]time.Duration, len(r.latencies))
 	copy(latencies, r.latencies)
 	return latencies
@@ -141,7 +141,7 @@ func (r *Results) GetLatencies() []time.Duration {
 func (r *Results) GetStatusCodes() map[int]int64 {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	codes := make(map[int]int64)
 	for k, v := range r.statusCodes {
 		codes[k] = v
@@ -153,7 +153,7 @@ func (r *Results) GetStatusCodes() map[int]int64 {
 func (r *Results) GetErrors() []error {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	errors := make([]error, len(r.errors))
 	copy(errors, r.errors)
 	return errors
@@ -170,16 +170,16 @@ func (r *Results) GetTotalBytes() int64 {
 func (r *Results) GetAverageLatency() time.Duration {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	if len(r.latencies) == 0 {
 		return 0
 	}
-	
+
 	var total time.Duration
 	for _, lat := range r.latencies {
 		total += lat
 	}
-	
+
 	return total / time.Duration(len(r.latencies))
 }
 
@@ -187,19 +187,19 @@ func (r *Results) GetAverageLatency() time.Duration {
 func (r *Results) GetLatencyStdDev() time.Duration {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	if len(r.latencies) <= 1 {
 		return 0
 	}
-	
+
 	avg := r.getAverageLatencyUnsafe()
 	var sumSquares float64
-	
+
 	for _, lat := range r.latencies {
 		diff := float64(lat - avg)
 		sumSquares += diff * diff
 	}
-	
+
 	variance := sumSquares / float64(len(r.latencies)-1)
 	return time.Duration(math.Sqrt(variance))
 }
@@ -209,12 +209,12 @@ func (r *Results) getAverageLatencyUnsafe() time.Duration {
 	if len(r.latencies) == 0 {
 		return 0
 	}
-	
+
 	var total time.Duration
 	for _, lat := range r.latencies {
 		total += lat
 	}
-	
+
 	return total / time.Duration(len(r.latencies))
 }
 
@@ -251,7 +251,7 @@ func (r *Results) AddReqPerSecond(count int64) {
 func (r *Results) GetReqPerSecond() []int64 {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	samples := make([]int64, len(r.reqPerSecond))
 	copy(samples, r.reqPerSecond)
 	return samples
@@ -261,11 +261,11 @@ func (r *Results) GetReqPerSecond() []int64 {
 func (r *Results) GetReqPerSecStats() (avg, stdev, max float64, percentage float64) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	if len(r.reqPerSecond) == 0 {
 		return 0, 0, 0, 0
 	}
-	
+
 	// 计算平均值
 	var sum int64
 	max = 0
@@ -276,12 +276,12 @@ func (r *Results) GetReqPerSecStats() (avg, stdev, max float64, percentage float
 		}
 	}
 	avg = float64(sum) / float64(len(r.reqPerSecond))
-	
+
 	// 计算标准差
 	if len(r.reqPerSecond) <= 1 {
 		return avg, 0, max, 0
 	}
-	
+
 	var sumSquares float64
 	for _, v := range r.reqPerSecond {
 		diff := float64(v) - avg
@@ -289,7 +289,7 @@ func (r *Results) GetReqPerSecStats() (avg, stdev, max float64, percentage float
 	}
 	variance := sumSquares / float64(len(r.reqPerSecond)-1)
 	stdev = math.Sqrt(variance)
-	
+
 	// 计算在一个标准差范围内的百分比
 	lower := avg - stdev
 	upper := avg + stdev
@@ -300,7 +300,7 @@ func (r *Results) GetReqPerSecStats() (avg, stdev, max float64, percentage float
 		}
 	}
 	percentage = float64(count) / float64(len(r.reqPerSecond)) * 100.0
-	
+
 	return avg, stdev, max, percentage
 }
 
@@ -323,36 +323,36 @@ func (r *Results) GetMaxLatency() time.Duration {
 func (r *Results) GetLatencyPercentiles() map[float64]time.Duration {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	percentiles := map[float64]time.Duration{}
-	
+
 	if len(r.latencies) == 0 {
 		return percentiles
 	}
-	
+
 	// 采样：最多使用 10000 个样本
 	sampleSize := len(r.latencies)
 	if sampleSize > 10000 {
 		sampleSize = 10000
 	}
-	
+
 	// 使用最近的样本
 	startIdx := len(r.latencies) - sampleSize
 	sample := make([]time.Duration, sampleSize)
 	copy(sample, r.latencies[startIdx:])
-	
+
 	// 使用标准库排序（快速排序，O(n log n)）
 	sort.Slice(sample, func(i, j int) bool {
 		return sample[i] < sample[j]
 	})
-	
+
 	// 计算百分位
 	ps := []float64{50, 75, 90, 95, 99}
 	for _, p := range ps {
 		idx := int(float64(len(sample)-1) * p / 100.0)
 		percentiles[p] = sample[idx]
 	}
-	
+
 	return percentiles
 }
 
@@ -360,7 +360,7 @@ func (r *Results) GetLatencyPercentiles() map[float64]time.Duration {
 func (r *Results) GetEndpointStats() map[string]*EndpointStats {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	// 返回副本以避免并发问题
 	result := make(map[string]*EndpointStats)
 	for url, stats := range r.endpointStats {
@@ -386,7 +386,7 @@ func (stats *EndpointStats) GetAverageLatency() time.Duration {
 	if len(stats.Latencies) == 0 {
 		return 0
 	}
-	
+
 	var total time.Duration
 	for _, latency := range stats.Latencies {
 		total += latency

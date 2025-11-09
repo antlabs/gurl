@@ -62,5 +62,5 @@ func shouldUsePulseImpl(req *http.Request) bool {
 
 	// 重新启用pulse实现进行测试
 	scheme := req.URL.Scheme
-	return scheme == "http" || scheme == "https"
+	return scheme == "http"
 }

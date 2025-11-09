@@ -69,7 +69,7 @@ func (s *Server) Start() error {
 // registerRoute registers a single route
 func (s *Server) registerRoute(mux *http.ServeMux, route RouteConfig) {
 	handler := s.createRouteHandler(route)
-	
+
 	if route.Method != "" {
 		// 如果指定了方法，只处理该方法
 		mux.HandleFunc(route.Path, func(w http.ResponseWriter, r *http.Request) {

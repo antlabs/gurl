@@ -56,12 +56,12 @@ func TestHandleBenchmark(t *testing.T) {
 		if r.Method != "POST" {
 			t.Errorf("Expected POST request, got %s", r.Method)
 		}
-		
+
 		// Verify Content-Type header
 		if ct := r.Header.Get("Content-Type"); ct != "application/json" {
 			t.Errorf("Expected Content-Type: application/json, got %s", ct)
 		}
-		
+
 		// Send a successful response
 		w.WriteHeader(http.StatusOK)
 		_, _ = fmt.Fprintf(w, `{"status": "success", "message": "Token generated"}`)

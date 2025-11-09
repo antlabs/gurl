@@ -21,17 +21,17 @@ func TestMCPServerIntegration(t *testing.T) {
 		_, _ = fmt.Fprintf(w, `{"status": "ok"}`)
 	}))
 	defer mockServer.Close()
-	
+
 	server := NewServer()
-	
+
 	// 测试服务器创建
 	if server == nil {
 		t.Fatal("Failed to create MCP server")
 	}
-	
+
 	// 测试工具处理函数是否存在
 	ctx := context.Background()
-	
+
 	// 创建一个有效的请求
 	request := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
@@ -42,17 +42,17 @@ func TestMCPServerIntegration(t *testing.T) {
 			},
 		},
 	}
-	
+
 	// 测试处理函数
 	result, err := server.handleHTTPRequest(ctx, request)
 	if err != nil {
 		t.Errorf("handleHTTPRequest failed: %v", err)
 	}
-	
+
 	if result == nil {
 		t.Error("Expected result but got nil")
 	}
-	
+
 	t.Logf("HTTP request result: %+v", result)
 }
 
@@ -84,14 +84,14 @@ func TestCorrectJSONRPCRequest(t *testing.T) {
 			},
 		},
 	}
-	
+
 	jsonBytes, err := json.MarshalIndent(correctRequest, "", "  ")
 	if err != nil {
 		t.Fatalf("Failed to marshal correct request: %v", err)
 	}
-	
+
 	t.Logf("Correct JSON-RPC request format:\n%s", string(jsonBytes))
-	
+
 	// 如果你需要基准测试功能，应该使用 gurl.benchmark 工具
 	benchmarkRequest := map[string]any{
 		"jsonrpc": "2.0",
@@ -114,24 +114,24 @@ func TestCorrectJSONRPCRequest(t *testing.T) {
 			},
 		},
 	}
-	
+
 	benchmarkBytes, err := json.MarshalIndent(benchmarkRequest, "", "  ")
 	if err != nil {
 		t.Fatalf("Failed to marshal benchmark request: %v", err)
 	}
-	
+
 	t.Logf("For benchmark functionality, use gurl.benchmark tool:\n%s", string(benchmarkBytes))
 }
 
 // TestMCPServerStartup 测试MCP服务器启动过程（不实际启动）
 func TestMCPServerStartup(t *testing.T) {
 	server := NewServer()
-	
+
 	// 验证服务器结构
 	if server.mcpServer != nil {
 		t.Error("mcpServer should be nil before Start() is called")
 	}
-	
+
 	// 注意：我们不能在测试中调用 server.Start()，因为它会阻塞
 	// 但我们可以验证服务器的基本结构是正确的
 }
@@ -140,21 +140,21 @@ func TestMCPServerStartup(t *testing.T) {
 func TestToolDefinitions(t *testing.T) {
 	// 验证 gurl.http_request 工具的参数定义
 	expectedParams := []string{"url", "method", "headers", "body"}
-	
+
 	t.Logf("gurl.http_request tool should support these parameters: %v", expectedParams)
-	
+
 	// 验证 gurl.benchmark 工具的参数定义
 	benchmarkParams := []string{
-		"url", "curl", "connections", "duration", "threads", "rate", 
-		"timeout", "method", "headers", "body", "content_type", 
+		"url", "curl", "connections", "duration", "threads", "rate",
+		"timeout", "method", "headers", "body", "content_type",
 		"verbose", "latency", "use_nethttp",
 	}
-	
+
 	t.Logf("gurl.benchmark tool supports these parameters: %v", benchmarkParams)
-	
+
 	// 验证 gurl.batch_test 工具的参数定义
 	batchParams := []string{"config", "tests", "verbose", "concurrency"}
-	
+
 	t.Logf("gurl.batch_test tool supports these parameters: %v", batchParams)
 }
 
@@ -162,7 +162,7 @@ func TestToolDefinitions(t *testing.T) {
 func TestErrorScenarios(t *testing.T) {
 	server := NewServer()
 	ctx := context.Background()
-	
+
 	errorTests := []struct {
 		name        string
 		request     mcp.CallToolRequest
@@ -209,23 +209,23 @@ func TestErrorScenarios(t *testing.T) {
 			description: "Should handle connection errors",
 		},
 	}
-	
+
 	for _, tt := range errorTests {
 		t.Run(tt.name, func(t *testing.T) {
 			// 设置超时以避免测试挂起
 			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 			defer cancel()
-			
+
 			result, err := server.handleHTTPRequest(ctx, tt.request)
-			
+
 			if tt.expectError && err == nil {
 				t.Errorf("Expected error for %s, but got none", tt.description)
 			}
-			
+
 			if !tt.expectError && err != nil {
 				t.Errorf("Unexpected error for %s: %v", tt.description, err)
 			}
-			
+
 			t.Logf("Test '%s': error=%v, result=%v", tt.name, err, result != nil)
 		})
 	}

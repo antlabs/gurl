@@ -28,15 +28,15 @@ func (s *Server) StartWithDebugLog(debugLogFile string) error {
 	if err := InitLogger(debugLogFile); err != nil {
 		return fmt.Errorf("failed to initialize logger: %w", err)
 	}
-	
+
 	Logger.Printf("Initializing MCP server...")
-	
+
 	// Create a new MCP server
-	mcpServer := server.NewMCPServer("gurl", "0.1.0", 
+	mcpServer := server.NewMCPServer("gurl", "0.1.0",
 		server.WithToolCapabilities(true))
 
 	Logger.Printf("Adding tools to MCP server...")
-	
+
 	// Add tools with logging middleware
 	mcpServer.AddTool(
 		mcp.NewTool(
@@ -46,10 +46,10 @@ func (s *Server) StartWithDebugLog(debugLogFile string) error {
 			mcp.WithString("method", mcp.Description("HTTP method (GET, POST, PUT, DELETE, etc.)"), mcp.DefaultString("GET")),
 			mcp.WithObject("headers", mcp.Description("HTTP headers to include in the request (key-value pairs)"), mcp.AdditionalProperties(map[string]any{"type": "string"})),
 			mcp.WithString("body", mcp.Description("Request body (for POST, PUT, etc.)")),
-		), 
+		),
 		WithLogging("handleHTTPRequest", s.handleHTTPRequest),
 	)
-	
+
 	mcpServer.AddTool(
 		mcp.NewTool(
 			"gurl.benchmark",
@@ -71,7 +71,7 @@ func (s *Server) StartWithDebugLog(debugLogFile string) error {
 		),
 		WithLogging("handleBenchmark", s.handleBenchmark),
 	)
-	
+
 	mcpServer.AddTool(
 		mcp.NewTool(
 			"gurl.batch_test",
