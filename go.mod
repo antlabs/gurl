@@ -1,6 +1,6 @@
 module github.com/antlabs/gurl
 
-go 1.25
+go 1.24.1
 
 require (
 	github.com/antlabs/httparser v0.0.11
