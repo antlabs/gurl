@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1762668502415,
+  "lastUpdate": 1762669420381,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -72,6 +72,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "14965449 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "74b8559a46e30a77c529e327843ff7afc60da712",
+          "message": "refactor: improve error handling in HTTP request panic recovery\n\n- Changed handleHTTPRequest to use named return values for proper error propagation\n- Updated BuildRequest to use io.Reader interface instead of concrete *strings.Reader type",
+          "timestamp": "2025-11-09T14:22:57+08:00",
+          "tree_id": "05806cf78b25f326aec769c1b29940412bc851fe",
+          "url": "https://github.com/antlabs/gurl/commit/74b8559a46e30a77c529e327843ff7afc60da712"
+        },
+        "date": 1762669419620,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100091781,
+            "unit": "ns/op\t 5219493 B/op\t   64417 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100091781,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 5219493,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 64417,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 403.8,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "14989899 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 403.8,
+            "unit": "ns/op",
+            "extra": "14989899 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "14989899 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "14989899 times\n4 procs"
           }
         ]
       }
