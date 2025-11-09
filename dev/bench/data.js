@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1762671246899,
+  "lastUpdate": 1762671630655,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -288,6 +288,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "15135516 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "4884bd4a7b5dbe76d4bed60771355b57325d0bd6",
+          "message": "chore: disable lint job and downgrade Go version requirement\n\n- Commented out golangci-lint job in CI workflow\n- Removed lint dependency from build job\n- Downgraded Go version from 1.25 to 1.24.1",
+          "timestamp": "2025-11-09T14:59:55+08:00",
+          "tree_id": "ae4cff2cb3697050e0fe32e0c5eb4a635e5c1890",
+          "url": "https://github.com/antlabs/gurl/commit/4884bd4a7b5dbe76d4bed60771355b57325d0bd6"
+        },
+        "date": 1762671630302,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100067283,
+            "unit": "ns/op\t 7656909 B/op\t   94490 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100067283,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 7656909,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 94490,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 412.7,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "14530971 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 412.7,
+            "unit": "ns/op",
+            "extra": "14530971 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "14530971 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "14530971 times\n4 procs"
           }
         ]
       }
