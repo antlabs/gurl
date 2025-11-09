@@ -304,6 +304,9 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 
 	address := net.JoinHostPort(pb.target.Hostname(), port)
 
+	// 启动采样 goroutine，每秒记录请求数和更新 UI（在连接建立之前启动）
+	samplingDone := StartSampling(testCtx, cancel, &requestCount, &errorCount, results, liveUI, nil, startTime)
+
 	// 创建多个连接（不输出日志，避免破坏 UI）
 	for i := 0; i < pb.config.Connections; i++ {
 		conn, err := net.Dial("tcp", address)
@@ -316,9 +319,6 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 			return nil, fmt.Errorf("failed to register connection: %w", err)
 		}
 	}
-
-	// 启动采样 goroutine，每秒记录请求数和更新 UI
-	samplingDone := StartSampling(testCtx, cancel, &requestCount, &errorCount, results, liveUI, nil, startTime)
 
 	// 等待测试时间结束
 	<-testCtx.Done()

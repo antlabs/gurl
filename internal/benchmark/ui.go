@@ -122,6 +122,9 @@ func NewLiveUI(duration time.Duration) (*LiveUI, error) {
 	// 启动键盘事件监听
 	go liveUI.handleKeyEvents()
 
+	// 初始渲染一次，避免黑屏
+	liveUI.Render()
+
 	return liveUI, nil
 }
 

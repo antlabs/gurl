@@ -43,6 +43,11 @@ func StartSampling(
 					statusCodes := results.GetStatusCodes()
 					latencyPercentiles := results.GetLatencyPercentiles()
 					errors := atomic.LoadInt64(errorCount)
+					
+					// DEBUG: 临时日志
+					// fmt.Printf("DEBUG: currentCount=%d, reqThisSecond=%d, avgLatency=%v, statusCodes=%v\n", 
+					//	currentCount, reqThisSecond, avgLatency, statusCodes)
+					
 					liveUI.Update(currentCount, reqThisSecond, statusCodes, avgLatency, minLatency, maxLatency, latencyPercentiles, errors)
 
 					// 如果是多端点模式，更新每个端点的统计
