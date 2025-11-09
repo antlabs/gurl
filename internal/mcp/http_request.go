@@ -23,10 +23,12 @@ type HTTPResponse struct {
 }
 
 // handleHTTPRequest handles the gurl.http_request tool
-func (s *Server) handleHTTPRequest(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (s *Server) handleHTTPRequest(ctx context.Context, req mcp.CallToolRequest) (result *mcp.CallToolResult, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			Logger.Printf("Panic in handleHTTPRequest: %v", r)
+			err = fmt.Errorf("panic in handleHTTPRequest: %v", r)
+			result = nil
 		}
 	}()
 

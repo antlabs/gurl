@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -16,7 +17,7 @@ func ParseCurl(curlCommand string) (*http.Request, error) {
 
 // BuildRequest builds an http.Request from config and URL
 func BuildRequest(cfg config.Config, targetURL *url.URL) (*http.Request, error) {
-	var bodyReader *strings.Reader
+	var bodyReader io.Reader
 	if cfg.Body != "" {
 		bodyReader = strings.NewReader(cfg.Body)
 	}
