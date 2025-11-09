@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1762678098945,
+  "lastUpdate": 1762678600065,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -648,6 +648,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "15389095 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "b58f03a2c94226e6e6bfb07d5f49cbe92f4d90c1",
+          "message": "refactor: improve UI initialization timing in benchmark\n\n- Move sampling goroutine start before connection establishment to capture metrics earlier\n- Add initial render call to prevent blank screen during UI startup\n- Include debug logging placeholder for troubleshooting metrics updates",
+          "timestamp": "2025-11-09T16:56:11+08:00",
+          "tree_id": "1587c62a2dd4add42e53e2ef9d185324f9023add",
+          "url": "https://github.com/antlabs/gurl/commit/b58f03a2c94226e6e6bfb07d5f49cbe92f4d90c1"
+        },
+        "date": 1762678599793,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100082744,
+            "unit": "ns/op\t 5030609 B/op\t   62043 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100082744,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 5030609,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 62043,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 400.4,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "15006542 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 400.4,
+            "unit": "ns/op",
+            "extra": "15006542 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "15006542 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "15006542 times\n4 procs"
           }
         ]
       }
