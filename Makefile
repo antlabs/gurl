@@ -110,13 +110,15 @@ install:
 .PHONY: test
 test:
 	@echo "Running tests..."
-	$(GOTEST) -v ./...
+	@mkdir -p .go-tmp
+	GOTMPDIR=$(PWD)/.go-tmp $(GOTEST) -v ./...
 
 # Run tests with coverage
 .PHONY: test-coverage
 test-coverage:
 	@echo "Running tests with coverage..."
-	$(GOTEST) -v -coverprofile=coverage.out ./...
+	@mkdir -p .go-tmp
+	GOTMPDIR=$(PWD)/.go-tmp $(GOTEST) -v -coverprofile=coverage.out ./...
 	$(GOCMD) tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report generated: coverage.html"
 
@@ -124,7 +126,8 @@ test-coverage:
 .PHONY: bench
 bench:
 	@echo "Running benchmarks..."
-	$(GOTEST) -bench=. -benchmem ./...
+	@mkdir -p .go-tmp
+	GOTMPDIR=$(PWD)/.go-tmp $(GOTEST) -bench=. -benchmem ./...
 
 # Build and run test server (current platform)
 .PHONY: test-server
@@ -173,7 +176,8 @@ test-server-darwin:
 .PHONY: test-unit
 test-unit:
 	@echo "Running unit tests..."
-	$(GOTEST) -v ./internal/...
+	@mkdir -p .go-tmp
+	GOTMPDIR=$(PWD)/.go-tmp $(GOTEST) -v ./internal/...
 
 # Run integration tests
 .PHONY: test-integration

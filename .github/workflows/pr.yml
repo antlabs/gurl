@@ -34,10 +34,17 @@ jobs:
         go mod tidy
         git diff --exit-code go.mod go.sum
 
+    - name: Create temp directory
+      run: mkdir -p ${{ runner.temp }}/go-tmp
+
     - name: Run tests with race detector
+      env:
+        GOTMPDIR: ${{ runner.temp }}/go-tmp
       run: go test -v -short -race ./...
 
     - name: Run benchmarks
+      env:
+        GOTMPDIR: ${{ runner.temp }}/go-tmp
       run: go test -bench=. -benchmem ./... -run=^$
 
     - name: Build

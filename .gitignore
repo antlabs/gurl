@@ -17,6 +17,10 @@ coverage.*
 *.coverprofile
 profile.cov
 
+# Test temporary directories
+.gurl-mcp-test-*
+.go-tmp/
+
 # Dependency directories (remove the comment below to include it)
 # vendor/
 

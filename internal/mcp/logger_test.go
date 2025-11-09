@@ -10,7 +10,13 @@ import (
 
 func TestLoggerWithDebugFile(t *testing.T) {
 	// Create a temporary directory for test logs
-	tempDir := t.TempDir()
+	// Use current directory to avoid dependency on /tmp
+	tempDir, err := os.MkdirTemp(".", ".gurl-mcp-test-*")
+	if err != nil {
+		t.Skipf("Cannot create temp directory: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+	
 	logFile := filepath.Join(tempDir, "test-debug.log")
 	
 	// Set the environment variable
@@ -25,7 +31,7 @@ func TestLoggerWithDebugFile(t *testing.T) {
 	}()
 	
 	// Set the debug log file
-	err := os.Setenv("GURL_MCP_DEBUG_LOG", logFile)
+	err = os.Setenv("GURL_MCP_DEBUG_LOG", logFile)
 	if err != nil {
 		t.Fatalf("Failed to set environment variable: %v", err)
 	}
@@ -108,7 +114,13 @@ func TestLoggerEnvironmentVariableHandling(t *testing.T) {
 
 func TestLoggerDirectoryCreation(t *testing.T) {
 	// Test that the logger can create nested directories
-	tempDir := t.TempDir()
+	// Use current directory to avoid dependency on /tmp
+	tempDir, err := os.MkdirTemp(".", ".gurl-mcp-test-*")
+	if err != nil {
+		t.Skipf("Cannot create temp directory: %v (this may happen in restricted environments)", err)
+	}
+	defer os.RemoveAll(tempDir)
+	
 	nestedLogFile := filepath.Join(tempDir, "nested", "deep", "debug.log")
 	
 	// Verify the directory doesn't exist initially
@@ -118,7 +130,7 @@ func TestLoggerDirectoryCreation(t *testing.T) {
 	
 	// Simulate what the init function does
 	dir := filepath.Dir(nestedLogFile)
-	err := os.MkdirAll(dir, 0755)
+	err = os.MkdirAll(dir, 0755)
 	if err != nil {
 		t.Fatalf("Failed to create directory: %v", err)
 	}

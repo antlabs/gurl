@@ -31,7 +31,12 @@ jobs:
     - name: Verify dependencies
       run: go mod verify
 
+    - name: Create temp directory
+      run: mkdir -p ${{ runner.temp }}/go-tmp
+
     - name: Run tests
+      env:
+        GOTMPDIR: ${{ runner.temp }}/go-tmp
       run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
 
     - name: Upload coverage to Codecov
