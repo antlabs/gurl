@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1762671630655,
+  "lastUpdate": 1762672392700,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -360,6 +360,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "14530971 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "a782d830cb02d6585474780fa3566ac67012cd92",
+          "message": "fix: configure custom temp directory for Go tests\n\n- Set GOTMPDIR in CI workflows and Makefile to use project-local temp directories\n- Update test files to create temp directories in current working directory instead of /tmp\n- Add temp directory patterns to .gitignore to keep repository clean",
+          "timestamp": "2025-11-09T15:12:37+08:00",
+          "tree_id": "ad4453ded27d29aa1d6356d8053a48de4ae890e1",
+          "url": "https://github.com/antlabs/gurl/commit/a782d830cb02d6585474780fa3566ac67012cd92"
+        },
+        "date": 1762672391819,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100074104,
+            "unit": "ns/op\t 7178920 B/op\t   88574 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100074104,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 7178920,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 88574,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 425.1,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "13691923 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 425.1,
+            "unit": "ns/op",
+            "extra": "13691923 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "13691923 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "13691923 times\n4 procs"
           }
         ]
       }
