@@ -252,14 +252,26 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 	results := stats.NewResults()
 
 	startTime := time.Now()
-	fmt.Printf("PulseBenchmark Run: %v\n", pb.config.Duration)
+	
 	// 创建测试上下文
 	testCtx, cancel := context.WithTimeout(ctx, pb.config.Duration)
 	defer cancel()
 
 	var requestCount int64
 	var errorCount int64
-	// var wg sync.WaitGroup
+
+	// 创建 Live UI（如果启用）
+	var liveUI *LiveUI
+	var uiErr error
+	if pb.config.LiveUI {
+		liveUI, uiErr = NewLiveUI(pb.config.Duration)
+		if uiErr != nil {
+			// 如果 UI 初始化失败，继续运行但不显示 UI
+			pb.config.LiveUI = false
+		} else {
+			defer liveUI.Close()
+		}
+	}
 
 	// 创建pulse客户端事件循环
 	loop := pulse.NewClientEventLoop(
@@ -271,8 +283,7 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 			requestCount: &requestCount,
 			errorCount:   &errorCount,
 			results:      results,
-			// wg:           &wg,
-			maxBodySize: 1 << 20, // 1MB限制
+			maxBodySize:  1 << 20, // 1MB限制
 		}),
 	)
 
@@ -293,8 +304,7 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 
 	address := net.JoinHostPort(pb.target.Hostname(), port)
 
-	// 创建多个连接
-	fmt.Printf("Creating connections...%s\n", address)
+	// 创建多个连接（不输出日志，避免破坏 UI）
 	for i := 0; i < pb.config.Connections; i++ {
 		conn, err := net.Dial("tcp", address)
 		if err != nil {
@@ -307,15 +317,22 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 		}
 	}
 
+	// 启动采样 goroutine，每秒记录请求数和更新 UI
+	samplingDone := StartSampling(testCtx, cancel, &requestCount, &errorCount, results, liveUI, nil, startTime)
+
 	// 等待测试时间结束
 	<-testCtx.Done()
 
-	fmt.Printf("testCtx.Done():%v\n", time.Since(startTime))
+	// 等待采样完成
+	<-samplingDone
 
 	// 计算最终结果
 	results.TotalRequests = atomic.LoadInt64(&requestCount)
 	results.TotalErrors = atomic.LoadInt64(&errorCount)
 	results.Duration = pb.config.Duration
+	
+	// 记录实际运行时间（用于调试）
+	_ = time.Since(startTime)
 
 	return results, nil
 }

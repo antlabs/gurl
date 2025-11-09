@@ -208,8 +208,11 @@ func runBenchmark(args *Args) error {
 		targetURL = req.URL.String()
 	}
 
-	fmt.Printf("Running %s test @ %s\n", cfg.Duration, targetURL)
-	fmt.Printf("  %d threads and %d connections\n", cfg.Threads, cfg.Connections)
+	// 只在非 LiveUI 模式下输出初始信息
+	if !cfg.LiveUI {
+		fmt.Printf("Running %s test @ %s\n", cfg.Duration, targetURL)
+		fmt.Printf("  %d threads and %d connections\n", cfg.Threads, cfg.Connections)
+	}
 
 	results, err := bench.Run(ctx)
 	if err != nil {

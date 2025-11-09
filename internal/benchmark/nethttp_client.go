@@ -126,68 +126,7 @@ func (b *NetHTTPBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 	startTime := time.Now()
 
 	// 启动采样 goroutine，每秒记录请求数
-	samplingDone := make(chan struct{})
-	go func() {
-		ticker := time.NewTicker(1 * time.Second)
-		defer ticker.Stop()
-
-		lastCount := int64(0)
-		for {
-			select {
-			case <-ticker.C:
-				currentCount := atomic.LoadInt64(&requestCount)
-				reqThisSecond := currentCount - lastCount
-				results.AddReqPerSecond(reqThisSecond)
-				lastCount = currentCount
-
-				// 更新 Live UI
-				if liveUI != nil {
-					avgLatency := results.GetAverageLatency()
-					minLatency := results.GetMinLatency()
-					maxLatency := results.GetMaxLatency()
-					statusCodes := results.GetStatusCodes()
-					latencyPercentiles := results.GetLatencyPercentiles()
-					errors := atomic.LoadInt64(&errorCount)
-					liveUI.Update(currentCount, reqThisSecond, statusCodes, avgLatency, minLatency, maxLatency, latencyPercentiles, errors)
-
-					// 如果是多端点模式，更新每个端点的统计
-					if b.requestPool != nil {
-						endpointStats := results.GetEndpointStats()
-						elapsed := time.Since(startTime)
-						if elapsed == 0 {
-							elapsed = time.Second
-						}
-
-						for url, stats := range endpointStats {
-							reqPerSec := float64(stats.Requests) / elapsed.Seconds()
-							avgLat := stats.GetAverageLatency()
-							liveUI.UpdateEndpointStats(url, stats.Requests, reqPerSec, avgLat, stats.MinLatency, stats.MaxLatency, stats.Errors)
-						}
-					}
-
-					liveUI.Render()
-				}
-			case <-testCtx.Done():
-				// 记录最后一个不完整的时间段
-				currentCount := atomic.LoadInt64(&requestCount)
-				if currentCount > lastCount {
-					results.AddReqPerSecond(currentCount - lastCount)
-				}
-				close(samplingDone)
-				return
-			case <-func() <-chan struct{} {
-				if liveUI != nil {
-					return liveUI.StopChan()
-				}
-				return nil
-			}():
-				// 用户按下退出键，提前取消测试
-				cancel()
-				close(samplingDone)
-				return
-			}
-		}
-	}()
+	samplingDone := StartSampling(testCtx, cancel, &requestCount, &errorCount, results, liveUI, b.requestPool, startTime)
 
 	// 启动工作线程
 	for i := 0; i < b.config.Threads; i++ {
