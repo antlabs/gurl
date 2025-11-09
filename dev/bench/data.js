@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1762677101199,
+  "lastUpdate": 1762678098945,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -576,6 +576,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "15175929 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "f741522c949243b2279714a3b10516ca97949e08",
+          "message": "fix: suppress output in LiveUI mode and extract sampling logic\n\n- Conditionally hide initial benchmark info when LiveUI is enabled to prevent UI interference\n- Extract sampling goroutine into shared StartSampling function to eliminate code duplication\n- Remove debug print statements from pulse_client that would disrupt LiveUI display",
+          "timestamp": "2025-11-09T16:47:25+08:00",
+          "tree_id": "ac47de7a13f192dee3a6f13a5825dd42169b4763",
+          "url": "https://github.com/antlabs/gurl/commit/f741522c949243b2279714a3b10516ca97949e08"
+        },
+        "date": 1762678098497,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100069862,
+            "unit": "ns/op\t 5092284 B/op\t   62782 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100069862,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 5092284,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 62782,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 393.5,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "15389095 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 393.5,
+            "unit": "ns/op",
+            "extra": "15389095 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "15389095 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "15389095 times\n4 procs"
           }
         ]
       }
