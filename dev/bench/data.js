@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1762672586665,
+  "lastUpdate": 1762677101199,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -504,6 +504,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "15067323 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "c4b07f930deb176d4810d408894fdf5ac048d351",
+          "message": "chore: update pulse dependency and fix code formatting\n\n- Updated antlabs/pulse to version e31dbf68d422 for latest improvements\n- Standardized struct field alignment and removed trailing whitespace across codebase\n- Modified pulse implementation to only handle HTTP (not HTTPS) connections",
+          "timestamp": "2025-11-09T16:30:02+08:00",
+          "tree_id": "982e580b146150ccce080e467360b7faf72cb7e9",
+          "url": "https://github.com/antlabs/gurl/commit/c4b07f930deb176d4810d408894fdf5ac048d351"
+        },
+        "date": 1762677100952,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100080682,
+            "unit": "ns/op\t 4937854 B/op\t   60846 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100080682,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 4937854,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 60846,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 399.5,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "15175929 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 399.5,
+            "unit": "ns/op",
+            "extra": "15175929 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "15175929 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "15175929 times\n4 procs"
           }
         ]
       }
