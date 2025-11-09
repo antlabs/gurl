@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1762669420381,
+  "lastUpdate": 1762669938133,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -144,6 +144,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "14989899 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "35ea90eaec24b711320dec3f5e8a0edc87449a08",
+          "message": "chore: upgrade Go version to 1.25.x in CI workflows",
+          "timestamp": "2025-11-09T14:31:20+08:00",
+          "tree_id": "088c4749998da5afa3f3d766133cb80056d0d5b5",
+          "url": "https://github.com/antlabs/gurl/commit/35ea90eaec24b711320dec3f5e8a0edc87449a08"
+        },
+        "date": 1762669937358,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100063357,
+            "unit": "ns/op\t 5105725 B/op\t   62964 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100063357,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 5105725,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 62964,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 391.1,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "15178192 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 391.1,
+            "unit": "ns/op",
+            "extra": "15178192 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "15178192 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "15178192 times\n4 procs"
           }
         ]
       }
