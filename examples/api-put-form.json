@@ -1,0 +1,21 @@
+{
+  "url": "https://httpbin.org/put",
+  "method": "PUT",
+  "headers": {
+    "Content-Type": "application/x-www-form-urlencoded",
+    "Authorization": "Basic dXNlcjpwYXNzd29yZA==",
+    "X-CSRF-Token": "csrf-token-xyz"
+  },
+  "body": "id=12345&name=Updated+Product&description=This+is+an+updated+product+description&price=99.99&stock=100&category=electronics&tags=laptop,gaming,high-performance&status=active",
+  "content_type": "application/x-www-form-urlencoded",
+  "connections": 20,
+  "duration": "15s",
+  "threads": 4,
+  "rate": 50,
+  "timeout": "5s",
+  "extra": {
+    "test_name": "产品更新接口压测",
+    "api_version": "v1"
+  }
+}
+

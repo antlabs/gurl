@@ -1,0 +1,16 @@
+{
+  "curl": "curl -X POST 'https://httpbin.org/anything?api_version=v2&debug=true&timestamp=1234567890' -H 'Accept: application/json, text/plain, */*' -H 'Accept-Encoding: gzip, deflate, br' -H 'Accept-Language: zh-CN,zh;q=0.9' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiZXhwIjoxNjE2MjM5MDIyfQ' -H 'Content-Type: application/json; charset=utf-8' -H 'Origin: https://app.example.com' -H 'Referer: https://app.example.com/dashboard' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' -H 'X-Requested-With: XMLHttpRequest' -H 'X-Client-ID: client_abc123' -H 'X-Device-ID: device_xyz789' -H 'X-Session-ID: session_qwerty' --data-raw '{\"action\":\"purchase\",\"order_id\":\"ORD-2024-001\",\"items\":[{\"product_id\":\"PROD-001\",\"name\":\"Laptop\",\"quantity\":1,\"price\":1299.99},{\"product_id\":\"PROD-002\",\"name\":\"Mouse\",\"quantity\":2,\"price\":29.99}],\"payment\":{\"method\":\"credit_card\",\"card_last4\":\"4242\",\"amount\":1359.97},\"shipping\":{\"address\":\"123 Main St\",\"city\":\"San Francisco\",\"state\":\"CA\",\"zip\":\"94102\",\"country\":\"US\"},\"metadata\":{\"source\":\"web\",\"campaign\":\"summer_sale\",\"referrer\":\"google_ads\"}}'",
+  "connections": 100,
+  "duration": "60s",
+  "threads": 20,
+  "rate": 500,
+  "timeout": "10s",
+  "use_nethttp": true,
+  "extra": {
+    "test_name": "订单提交完整流程压测",
+    "environment": "production-like",
+    "test_type": "stress_test",
+    "max_expected_latency": "500ms"
+  }
+}
+

@@ -21,6 +21,7 @@ Turn your everyday `curl` into a scalable load test in seconds — no configurat
 - 📈 **Per-endpoint statistics** - TPS, latency, status codes for each endpoint
 - 🎨 **Live Terminal UI** with real-time charts and statistics
 - 🎭 **Mock HTTP Server** - Built-in test server for benchmarking validation
+- 🌐 **RESTful API** - Submit and manage benchmark tasks via HTTP API
 - ⚡ Async I/O for maximum performance
 - 🎯 Configurable connections, threads, and duration
 - 📉 Latency distribution analysis
@@ -77,6 +78,7 @@ gurl --parse-curl "curl -X POST -H 'Content-Type: application/json' -d '{\"name\
 - `-v, --verbose`: Verbose output
 - `--latency`: Print latency statistics
 - `--live-ui`: Enable live terminal UI with real-time stats (interactive mode)
+- `--ui-theme`: UI color theme: dark, light, or auto (default: auto)
 - `--use-nethttp`: Force use standard library net/http instead of pulse
 
 ## Examples
@@ -224,6 +226,46 @@ Each row shows:
 - Press `q` or `Ctrl+C` to stop the test early
 - UI updates every second with live data
 
+**Color Themes**:
+
+gurl supports adaptive color themes for optimal visibility on different terminal backgrounds:
+
+```bash
+# Auto-detect terminal background (default)
+gurl --live-ui -c 100 -d 60s http://example.com
+
+# Force dark theme (for dark terminals)
+gurl --live-ui --ui-theme dark -c 100 -d 60s http://example.com
+
+# Force light theme (for light terminals)
+gurl --live-ui --ui-theme light -c 100 -d 60s http://example.com
+
+# Set theme via environment variable
+export GURL_THEME=light
+gurl --live-ui -c 100 -d 60s http://example.com
+```
+
+The system automatically detects your terminal's background color and adjusts the UI colors accordingly:
+- **Dark Theme**: Optimized for black/dark backgrounds (white text, bright colors)
+- **Light Theme V4.0 (Ultimate)**: Revolutionarily designed for white/light backgrounds:
+  - **主色调**: Deep Blue (60%) - 深沉有力，统一全局
+  - **强调色**: Magenta (30%) - 醒目突出，创造焦点
+  - **功能色**: Red/Green (10%) - 经典语义
+  - **彻底摒弃**: Cyan和Yellow（对比度不够）
+  
+The ultimate light theme uses only 4 colors with strong contrast ratios, creating a powerful, clean, and highly visible experience on white backgrounds. Based on the 60-30-10 golden ratio for optimal visual hierarchy.
+
+**V4.0 Key Features**:
+- 🔵 Blue as primary color (strong contrast)
+- 💜 Magenta for emphasis (balanced usage)
+- ✅ Only 4 colors (simple & powerful)
+- ❌ No Cyan/Yellow (removed for clarity)
+
+For more details, see:
+- [Ultimate Light Theme V4.0](docs/ULTIMATE_LIGHT_THEME.md) ⭐ NEW
+- [UI Theme Documentation](docs/UI_THEME.md)
+- [Theme Evolution History](docs/THEME_EVOLUTION.md)
+
 **Note**: Live UI currently requires `--use-nethttp` flag.
 
 ### Mock HTTP Server
@@ -308,6 +350,61 @@ gurl --parse-curl-file endpoints.txt -c 50 -d 30s --use-nethttp
 - **Status codes**: Test error handling
 - **Multiple routes**: Define different endpoints with different behaviors
 - **Request logging**: See all incoming requests in real-time
+
+## RESTful API Server
+
+gurl provides a RESTful API server that allows you to submit and manage benchmark tasks via HTTP requests.
+
+### Starting the API Server
+
+```bash
+# Start API server on default port 8080
+gurl --api-server
+
+# Start API server on custom port
+gurl --api-server --api-port 9090
+```
+
+### API Endpoints
+
+- **POST** `/api/v1/benchmark` - Submit a benchmark task
+- **POST** `/api/v1/batch` - Submit a batch test task
+- **GET** `/api/v1/status/:id` - Get task status
+- **GET** `/api/v1/results/:id` - Get task results
+- **GET** `/health` - Health check endpoint
+
+### Quick Example
+
+```bash
+# Start API server
+gurl --api-server --api-port 8080
+
+# In another terminal, submit a benchmark task
+curl -X POST http://localhost:8080/api/v1/benchmark \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://api.example.com/users",
+    "connections": 100,
+    "duration": "30s",
+    "threads": 4,
+    "use_nethttp": true
+  }'
+
+# Response:
+# {
+#   "task_id": "task_1234567890123456789",
+#   "status": "accepted",
+#   "message": "Benchmark task created and started"
+# }
+
+# Check task status
+curl http://localhost:8080/api/v1/status/task_1234567890123456789
+
+# Get results when completed
+curl http://localhost:8080/api/v1/results/task_1234567890123456789
+```
+
+For detailed API documentation, see [API.md](docs/API.md).
 
 ## Batch Testing with Configuration Files
 

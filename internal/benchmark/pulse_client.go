@@ -252,7 +252,7 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 	results := stats.NewResults()
 
 	startTime := time.Now()
-	
+
 	// 创建测试上下文
 	testCtx, cancel := context.WithTimeout(ctx, pb.config.Duration)
 	defer cancel()
@@ -264,7 +264,7 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 	var liveUI *LiveUI
 	var uiErr error
 	if pb.config.LiveUI {
-		liveUI, uiErr = NewLiveUI(pb.config.Duration)
+		liveUI, uiErr = NewLiveUIWithTheme(pb.config.Duration, pb.config.UITheme)
 		if uiErr != nil {
 			// 如果 UI 初始化失败，继续运行但不显示 UI
 			pb.config.LiveUI = false
@@ -330,7 +330,7 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 	results.TotalRequests = atomic.LoadInt64(&requestCount)
 	results.TotalErrors = atomic.LoadInt64(&errorCount)
 	results.Duration = pb.config.Duration
-	
+
 	// 记录实际运行时间（用于调试）
 	_ = time.Since(startTime)
 

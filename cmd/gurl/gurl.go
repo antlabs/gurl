@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/antlabs/gurl/internal/api"
 	"github.com/antlabs/gurl/internal/batch"
 	"github.com/antlabs/gurl/internal/benchmark"
 	"github.com/antlabs/gurl/internal/config"
@@ -42,9 +43,10 @@ type Args struct {
 	ContentType string   `clop:"--content-type" usage:"Content-Type header"`
 
 	// 输出选项
-	Verbose      bool `clop:"-v;--verbose" usage:"Verbose output"`
-	PrintLatency bool `clop:"--latency" usage:"Print latency statistics"`
-	LiveUI       bool `clop:"--live-ui" usage:"Enable live terminal UI with real-time stats"`
+	Verbose      bool   `clop:"-v;--verbose" usage:"Verbose output"`
+	PrintLatency bool   `clop:"--latency" usage:"Print latency statistics"`
+	LiveUI       bool   `clop:"--live-ui" usage:"Enable live terminal UI with real-time stats"`
+	UITheme      string `clop:"--ui-theme" usage:"UI color theme: dark, light, or auto (default: auto)"`
 
 	// 引擎选项
 	UseNetHTTP bool `clop:"--use-nethttp" usage:"Force use standard library net/http instead of pulse"`
@@ -62,6 +64,10 @@ type Args struct {
 	// MCP选项
 	MCP         bool   `clop:"--mcp" usage:"Start as an MCP server"`
 	MCPDebugLog string `clop:"--mcp-debug-log" usage:"Path to MCP debug log file (only used with --mcp)"`
+
+	// API服务器选项
+	APIServer bool `clop:"--api-server" usage:"Start as a RESTful API server"`
+	APIPort   int  `clop:"--api-port" usage:"Port for API server" default:"8080"`
 
 	// Mock服务器选项
 	MockServer     bool   `clop:"--mock-server" usage:"Start a mock HTTP server for testing"`
@@ -93,6 +99,7 @@ func (a *Args) toConfig() config.Config {
 		Verbose:      a.Verbose,
 		PrintLatency: a.PrintLatency,
 		LiveUI:       a.LiveUI,
+		UITheme:      a.UITheme,
 		UseNetHTTP:   a.UseNetHTTP,
 	}
 }
@@ -356,6 +363,28 @@ func main() {
 		server := mcp.NewServer()
 		if err := server.StartWithDebugLog(args.MCPDebugLog); err != nil {
 			fmt.Fprintf(os.Stderr, "MCP server error: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
+
+	// 检查是否启动API服务器
+	if args.APIServer {
+		apiServer := api.NewHTTPServer(args.APIPort)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		// 处理信号以优雅关闭
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+		go func() {
+			<-sigChan
+			fmt.Println("\nShutting down API server...")
+			cancel()
+		}()
+
+		if err := apiServer.StartWithContext(ctx); err != nil {
+			fmt.Fprintf(os.Stderr, "API server error: %v\n", err)
 			os.Exit(1)
 		}
 		return

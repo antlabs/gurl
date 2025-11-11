@@ -1,0 +1,25 @@
+{
+  "url": "https://httpbin.org/post",
+  "method": "POST",
+  "headers": {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0",
+    "X-Request-ID": "req-12345",
+    "X-Client-Version": "1.0.0",
+    "User-Agent": "MyApp/1.0"
+  },
+  "body": "{\"username\":\"john.doe\",\"email\":\"john@example.com\",\"profile\":{\"age\":30,\"country\":\"US\",\"preferences\":{\"theme\":\"dark\",\"notifications\":true}}}",
+  "content_type": "application/json",
+  "connections": 50,
+  "duration": "30s",
+  "threads": 10,
+  "rate": 200,
+  "timeout": "5s",
+  "use_nethttp": false,
+  "extra": {
+    "test_name": "用户注册接口压测",
+    "environment": "staging",
+    "version": "v2.0"
+  }
+}
+

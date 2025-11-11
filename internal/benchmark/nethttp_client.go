@@ -113,7 +113,7 @@ func (b *NetHTTPBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 	var liveUI *LiveUI
 	var uiErr error
 	if b.config.LiveUI {
-		liveUI, uiErr = NewLiveUI(b.config.Duration)
+		liveUI, uiErr = NewLiveUIWithTheme(b.config.Duration, b.config.UITheme)
 		if uiErr != nil {
 			// 如果 UI 初始化失败，继续运行但不显示 UI
 			b.config.LiveUI = false

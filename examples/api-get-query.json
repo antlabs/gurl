@@ -1,0 +1,21 @@
+{
+  "url": "https://httpbin.org/get?page=1&limit=50&sort=created_at&order=desc&filter[status]=active&filter[category]=electronics&search=laptop",
+  "method": "GET",
+  "headers": {
+    "Accept": "application/json",
+    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+    "X-API-Key": "your-api-key-here",
+    "X-Session-Token": "sess_abc123xyz",
+    "Cache-Control": "no-cache"
+  },
+  "connections": 30,
+  "duration": "20s",
+  "threads": 5,
+  "rate": 100,
+  "timeout": "3s",
+  "extra": {
+    "test_name": "商品搜索API压测",
+    "scenario": "高并发查询"
+  }
+}
+

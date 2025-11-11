@@ -26,9 +26,10 @@ type Config struct {
 	ContentType string   // Content-Type header
 
 	// Output options
-	Verbose      bool // Verbose output
-	PrintLatency bool // Print latency statistics
-	LiveUI       bool // Enable live terminal UI
+	Verbose      bool   // Verbose output
+	PrintLatency bool   // Print latency statistics
+	LiveUI       bool   // Enable live terminal UI
+	UITheme      string // UI color theme: "dark", "light", or "" for auto-detect
 
 	// Engine options
 	UseNetHTTP bool // Force use standard library net/http instead of pulse
