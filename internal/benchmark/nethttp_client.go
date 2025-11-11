@@ -146,7 +146,8 @@ func (b *NetHTTPBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 	// 计算最终结果
 	results.TotalRequests = atomic.LoadInt64(&requestCount)
 	results.TotalErrors = atomic.LoadInt64(&errorCount)
-	results.Duration = b.config.Duration
+	// 使用实际运行时间，而不是配置的时间（支持提前中断）
+	results.Duration = time.Since(startTime)
 
 	return results, nil
 }

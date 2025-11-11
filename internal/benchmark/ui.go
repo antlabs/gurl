@@ -320,11 +320,12 @@ func NewLiveUIWithTheme(duration time.Duration, themeName string) (*LiveUI, erro
 	liveUI.reqChart = widgets.NewBarChart()
 	liveUI.reqChart.Title = "Requests / past sec (auto)"
 	liveUI.reqChart.SetRect(0, 12, 50, 30)
-	liveUI.reqChart.BarWidth = 7 // 增加宽度以显示更多数字
-	liveUI.reqChart.BarGap = 1   // 柱子间隔
+	liveUI.reqChart.BarWidth = 6 // 减小宽度以留出更多空间给数字
+	liveUI.reqChart.BarGap = 2   // 增加柱子间隔以避免数字重叠
 	liveUI.reqChart.BarColors = []ui.Color{theme.ReqChartBar}
 	liveUI.reqChart.LabelStyles = []ui.Style{ui.NewStyle(theme.ReqChartLabel)}
 	liveUI.reqChart.NumStyles = []ui.Style{ui.NewStyle(theme.ReqChartNumber)}
+	liveUI.reqChart.NumFormatter = formatNumber // 使用紧凑格式化函数
 	liveUI.reqChart.BorderStyle.Fg = theme.Border
 
 	// Latency chart
@@ -454,12 +455,27 @@ func (l *LiveUI) Update(requests int64, reqPerSec int64, statusCodes map[int]int
 	if len(l.reqPerSecond) > 0 {
 		data := make([]float64, len(l.reqPerSecond))
 		labels := make([]string, len(l.reqPerSecond))
+		
 		for i, v := range l.reqPerSecond {
 			data[i] = float64(v)
 			labels[i] = fmt.Sprintf("%ds", i+1)
 		}
 		l.reqChart.Data = data
 		l.reqChart.Labels = labels
+		
+		// 检查最大值以更新标题提示
+		maxVal := float64(0)
+		for _, v := range l.reqPerSecond {
+			if float64(v) > maxVal {
+				maxVal = float64(v)
+			}
+		}
+		// 当数值较大时，在标题中说明使用了紧凑格式
+		if maxVal >= 1000 {
+			l.reqChart.Title = "Requests / past sec (K/M format)"
+		} else {
+			l.reqChart.Title = "Requests / past sec"
+		}
 	}
 
 	// Update latency histogram
@@ -563,6 +579,16 @@ func formatDurationShort(d time.Duration) string {
 		return fmt.Sprintf("%.1fms", float64(d.Nanoseconds())/1000000.0)
 	}
 	return fmt.Sprintf("%.2fs", d.Seconds())
+}
+
+// formatNumber formats large numbers with K/M suffixes for compact display
+func formatNumber(n float64) string {
+	if n >= 1000000 {
+		return fmt.Sprintf("%.1fM", n/1000000)
+	} else if n >= 1000 {
+		return fmt.Sprintf("%.0fK", n/1000)
+	}
+	return fmt.Sprintf("%.0f", n)
 }
 
 // Render renders the UI
