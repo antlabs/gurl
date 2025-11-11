@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1762678600065,
+  "lastUpdate": 1762875902300,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -720,6 +720,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "15006542 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "67b52418f62f2476890a3aa1976dfc257469fd36",
+          "message": "feat: add RESTful API server for remote benchmark management\n\n- Implemented HTTP API server with endpoints for submitting, monitoring, and retrieving benchmark results\n- Added UI theme customization with auto-detection, dark, and light modes (including Ultimate Light Theme V4.0)\n- Created comprehensive API documentation with examples for all endpoints",
+          "timestamp": "2025-11-11T23:44:22+08:00",
+          "tree_id": "748da1b6e5d213fc4427a43d39a9f64453918291",
+          "url": "https://github.com/antlabs/gurl/commit/67b52418f62f2476890a3aa1976dfc257469fd36"
+        },
+        "date": 1762875901481,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100131303,
+            "unit": "ns/op\t 5034700 B/op\t   62104 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100131303,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 5034700,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 62104,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 405.2,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "15016854 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 405.2,
+            "unit": "ns/op",
+            "extra": "15016854 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "15016854 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "15016854 times\n4 procs"
           }
         ]
       }
