@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -278,6 +279,7 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 		testCtx,
 		pulse.WithTaskType(pulse.TaskTypeInEventLoop), // 在事件循环中处理任务
 		pulse.WithTriggerType(core.TriggerTypeLevel),
+		pulse.WithLogLevel(slog.LevelError), // 只显示错误日志，避免INFO日志干扰UI显示
 		pulse.WithCallback(&HTTPClientHandler{
 			request:      pb.request,
 			requestCount: &requestCount,
