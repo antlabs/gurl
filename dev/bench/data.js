@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1762876643113,
+  "lastUpdate": 1762877634217,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -864,6 +864,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "15195699 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "ea74ac82a0594141349ffc2db7cc8228e71a6682",
+          "message": "fix: use actual runtime duration and improve chart number formatting\n\n- Changed results.Duration to use actual elapsed time instead of configured duration to support early interruption\n- Added compact number formatting (K/M suffixes) for request chart to prevent display overflow\n- Adjusted bar chart spacing and added dynamic title to indicate format when using large numbers",
+          "timestamp": "2025-11-12T00:13:20+08:00",
+          "tree_id": "29de0454114efd715965dad2b7f467ab1f47d47a",
+          "url": "https://github.com/antlabs/gurl/commit/ea74ac82a0594141349ffc2db7cc8228e71a6682"
+        },
+        "date": 1762877633565,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100079848,
+            "unit": "ns/op\t 4939548 B/op\t   60930 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100079848,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 4939548,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 60930,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 409.6,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "13996408 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 409.6,
+            "unit": "ns/op",
+            "extra": "13996408 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "13996408 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "13996408 times\n4 procs"
           }
         ]
       }
