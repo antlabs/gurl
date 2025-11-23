@@ -47,8 +47,20 @@ func (s *Server) Start() error {
 
 	// 如果有配置文件中的路由，注册它们
 	if len(s.config.Routes) > 0 {
+		// 为了支持同一路径下的多种 HTTP 方法，这里先按 Path 归组，
+		// 然后为每个 Path 注册一个 handler，在 handler 内部分发 Method，
+		// 避免对同一 pattern 多次调用 HandleFunc 导致冲突。
+		pathRoutes := make(map[string][]RouteConfig)
 		for _, route := range s.config.Routes {
-			s.registerRoute(mux, route)
+			path := route.Path
+			if path == "" {
+				path = "/"
+			}
+			pathRoutes[path] = append(pathRoutes[path], route)
+		}
+
+		for path, routes := range pathRoutes {
+			s.registerRoute(mux, path, routes)
 		}
 	} else {
 		// 默认路由：处理所有请求
@@ -66,24 +78,25 @@ func (s *Server) Start() error {
 	return s.server.ListenAndServe()
 }
 
-// registerRoute registers a single route
-func (s *Server) registerRoute(mux *http.ServeMux, route RouteConfig) {
-	handler := s.createRouteHandler(route)
-
-	if route.Method != "" {
-		// 如果指定了方法，只处理该方法
-		mux.HandleFunc(route.Path, func(w http.ResponseWriter, r *http.Request) {
-			if r.Method != route.Method {
-				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-				return
+// registerRoute registers all routes for a specific path
+func (s *Server) registerRoute(mux *http.ServeMux, path string, routes []RouteConfig) {
+	mux.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+		for _, route := range routes {
+			// 如果配置了 Method，则需要精确匹配；未配置则匹配所有方法
+			if route.Method != "" && r.Method != route.Method {
+				continue
 			}
+			handler := s.createRouteHandler(route)
 			handler(w, r)
-		})
-	} else {
-		mux.HandleFunc(route.Path, handler)
-	}
+			return
+		}
 
-	log.Printf("Registered route: %s %s", route.Method, route.Path)
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	})
+
+	for _, route := range routes {
+		log.Printf("Registered route: %s %s", route.Method, path)
+	}
 }
 
 // createRouteHandler creates a handler for a specific route

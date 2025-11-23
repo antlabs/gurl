@@ -1,5 +1,5 @@
 # Mock Server Configuration Example
-port: 8080
+port: 9191
 
 routes:
   # Echo endpoint - returns request details
