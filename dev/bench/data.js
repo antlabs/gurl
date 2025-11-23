@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1763908230051,
+  "lastUpdate": 1763911583553,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -1152,6 +1152,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "14701317 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "100aae52c1490b4e970972ab624c976f8c3bda2d",
+          "message": "feat: improve assertion error handling and add quoted string literal support\n\n- Added unquoteMaybe helper to support quoted string literals in header and body assertions\n- Fixed success rate calculation to account for per-request assertion failures in addition to top-level errors\n- Updated batch reporter to display stats (requests/RPS/latency) for failed tests with assertion errors\n- Added comments clarifying that tests are considered successful only when both top-level error and stats errors are absent",
+          "timestamp": "2025-11-23T23:25:50+08:00",
+          "tree_id": "a5299cc4da45f60412aacd628b82f8ec0273ed6c",
+          "url": "https://github.com/antlabs/gurl/commit/100aae52c1490b4e970972ab624c976f8c3bda2d"
+        },
+        "date": 1763911582694,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100081160,
+            "unit": "ns/op\t 5126351 B/op\t   63264 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100081160,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 5126351,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 63264,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 399.9,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "14873554 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 399.9,
+            "unit": "ns/op",
+            "extra": "14873554 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "14873554 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "14873554 times\n4 procs"
           }
         ]
       }
