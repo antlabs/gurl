@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1763883643895,
+  "lastUpdate": 1763908230051,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -1080,6 +1080,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "14979574 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "aff7589f2a1a116ebe0b5f5861ac8d0261515abf",
+          "message": "feat: support multiple HTTP methods per path in mock server\n\n- Changed mock server port from 8080 to 9191 in example configuration\n- Refactored route registration to group routes by path and dispatch by method within handler\n- Fixed conflict when registering multiple methods for the same path pattern\n- Moved method matching logic inside handler to avoid duplicate pattern registration errors",
+          "timestamp": "2025-11-23T22:29:55+08:00",
+          "tree_id": "71f617a4e8adb1f54bb33845af22051ecad95c49",
+          "url": "https://github.com/antlabs/gurl/commit/aff7589f2a1a116ebe0b5f5861ac8d0261515abf"
+        },
+        "date": 1763908229579,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100084224,
+            "unit": "ns/op\t 4977303 B/op\t   61361 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100084224,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 4977303,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 61361,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 413.9,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "14701317 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 413.9,
+            "unit": "ns/op",
+            "extra": "14701317 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "14701317 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "14701317 times\n4 procs"
           }
         ]
       }
