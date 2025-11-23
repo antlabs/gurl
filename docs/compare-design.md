@@ -35,24 +35,18 @@ compare:
     base: cache_on
     target: cache_off
 
-    compare_fields:
-      status: true
-      headers: true
-      body: true
-
-    response_compare:
-      - "status == status"
-      - "header[Content-Type] == header[Content-Type]"
-      - "header[Date] ignore"
-      - "gjson data.user.id == gjson data.user.id"
-      - "gjson data.items == gjson data.items"
-      - "gjson meta.request_id exists"
+    response_compare: |
+      status == status
+      header "Content-Type" == header "Content-Type"
+      header "Date" ignore
+      gjson "data.user.id" == gjson "data.user.id"
+      gjson "data.items" == gjson "data.items"
+      gjson "meta.request_id" exists
 ```
 
 - `requests`：定义要发送的 HTTP 请求，直接嵌入 `curl` 字符串，支持从 Postman 粘贴。
 - `compare`：定义一个或多个对比场景：
   - 指定基准请求 `base` 和目标请求 `target`（或 `targets`）。
-  - 通过 `compare_fields` 决定是否对比 status / headers / body。
   - 通过 `response_compare`（hurl 风格断言）定义更细粒度的对比规则，其中 JSON 字段对比通过 `gjson` 关键字调用 gjson 路径表达式。
 
 ---
@@ -107,30 +101,21 @@ compare:
     base: cache_on
     target: cache_off
 
-    compare_fields:
-      status: true
-      headers: true
-      body: true
-
-    response_compare:
-      - "status == status"
-      - "header[Content-Type] == header[Content-Type]"
-      - "header[ETag] == header[ETag]"
-      - "header[Date] ignore"
-      - "header[Server] ignore"
-      - "gjson data.user.id == gjson data.user.id"
-      - "gjson data.items == gjson data.items"
-      - "gjson meta.request_id exists"
-      - "gjson meta.env exists"
+    response_compare: |
+      status == status
+      header "Content-Type" == header "Content-Type"
+      header "ETag" == header "ETag"
+      header "Date" ignore
+      header "Server" ignore
+      gjson "data.user.id" == gjson "data.user.id"
+      gjson "data.items" == gjson "data.items"
+      gjson "meta.request_id" exists
+      gjson "meta.env" exists
 ```
 
 - `base`：作为基准的请求名，对应 `requests` 中的 `name`。
 - `target`：要与基准对比的请求名。
-- `compare_fields`：
-  - `status`：是否比较 HTTP 状态码。
-  - `headers`：是否进行 header 级别对比（可结合 `header[...]` 断言控制粒度）。
-  - `body`：是否进行响应体对比（结合 `gjson` + gjson 路径使用）。
-- `response_compare`：使用 hurl 风格的断言语法，作为断言字符串数组，支持对 status、headers、gjson 路径等进行精细对比。
+- `response_compare`：使用 hurl 风格的断言语法，作为多行字符串（类似 `asserts: |`），每一行是一个断言表达式，支持对 status、headers、gjson 路径等进行精细对比。
 
 ---
 
@@ -211,54 +196,6 @@ tests:
 
 ---
 
-## 5. 按 gjson 路径粒度的 body 对比
-
-### 5.1 gjson 路径对比配置（结构化写法备选）
-
-在 `compare` 中除了 `response_compare` 这种 hurl 风格外，也可以提供一个更结构化的 gjson 路径对比配置，方便精细控制：
-
-```yaml
-compare:
-  - name: cache_behavior_compare
-    base: cache_on
-    target: cache_off
-
-    compare_fields:
-      status: true
-      headers: false
-      body: true
-
-    gjson_compare:
-      equals:
-        - path: "data.items"
-        - path: "data.user.id"
-        - path: "data.config.feature_flags"
-
-      approx:
-        - path: "metrics.score"
-          tolerance: 0.001
-
-      exists:
-        - path: "meta.request_id"
-        - path: "meta.env"
-
-      ignore:
-        - path: "meta.timestamp"
-        - path: "meta.trace_id"
-```
-
-- `equals`：要求两个响应在该 gjson 路径上的值完全相等（可使用深度比较）。
-- `approx`：数值近似比较，误差不超过 `tolerance` 即认为通过。
-- `exists`：仅要求字段存在，值不为 `null` 或零值。
-- `ignore`：在全量 diff 中忽略这些路径的差异。
-
-该结构可以与 `response_compare` 并存：
-
-- `response_compare` 偏向「人类可读」的一行断言语法（其中 `gjson` 使用 gjson 路径）。
-- `gjson_compare` 偏向「配置化」的结构，便于自动生成或编辑器支持，同样依赖 gjson 路径。
-
----
-
 ## 6. 批量多个请求的对比模式
 
 ### 6.1 一对多：一个 base，对多个 target
@@ -290,15 +227,11 @@ requests:
 compare:
   - name: cache_batch_compare
     base: base_cache_on
-    targets:
-      - cache_off
-      - cache_short
-      - cache_very_long
 
-    response_compare:
-      - "status == status"
-      - "gjson data == gjson data"
-      - "gjson meta.request_id exists"
+    response_compare: |
+      status == status
+      gjson "data" == gjson "data"
+      gjson "meta.request_id" exists
 ```
 
 执行时：
@@ -336,9 +269,9 @@ compare:
     left_set: left
     right_set: right
 
-    response_compare:
-      - assert: "status == status"
-      - assert: "gjson data == gjson data"
+    response_compare: |
+      status == status
+      gjson "data" == gjson "data"
 ```
 
 执行时：
@@ -382,9 +315,9 @@ compare:
     base_role: base
     target_role: variant
 
-    response_compare:
-      - assert: "status == status"
-      - assert: "gjson data == gjson data"
+    response_compare: |
+      status == status
+      gjson "data" == gjson "data"
 ```
 
 执行时：
@@ -504,13 +437,13 @@ Summary:
   - `body contains "success"`
   - `duration_ms < 500`
 
-在 compare 模式中，断言嵌在 `response_compare` 数组中，例如：
+在 compare 模式中，断言嵌在 `response_compare` 多行字符串中，例如：
 
 ```yaml
-response_compare:
-  - "status == status"
-  - "gjson data == gjson data"
-  - "gjson meta.request_id exists"
+response_compare: |
+  status == status
+  gjson "data" == gjson "data"
+  gjson "meta.request_id" exists
 ```
 
 在单请求模式中，断言则写在 YAML 的 `asserts` 字段中，例如：
