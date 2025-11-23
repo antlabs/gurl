@@ -37,8 +37,8 @@ compare:
 
     response_compare: |
       status == status
-      header "Content-Type" == header "Content-Type"
-      header "Date" ignore
+      header[Content-Type] == header[Content-Type]
+      header[Date] ignore
       gjson "data.user.id" == gjson "data.user.id"
       gjson "data.items" == gjson "data.items"
       gjson "meta.request_id" exists
@@ -103,10 +103,10 @@ compare:
 
     response_compare: |
       status == status
-      header "Content-Type" == header "Content-Type"
-      header "ETag" == header "ETag"
-      header "Date" ignore
-      header "Server" ignore
+      header[Content-Type] == header[Content-Type]
+      header[ETag] == header[ETag]
+      header[Date] ignore
+      header[Server] ignore
       gjson "data.user.id" == gjson "data.user.id"
       gjson "data.items" == gjson "data.items"
       gjson "meta.request_id" exists
@@ -128,20 +128,22 @@ compare:
 - `"status == status"`
 - `"header[Content-Type] == header[Content-Type]"`
 - `"header[Date] ignore"`
-- `"gjson data.user.id == gjson data.user.id"`
-- `"gjson meta.request_id exists"`
+- `"gjson \"data.user.id\" == gjson \"data.user.id\""`
+- `"gjson \"meta.request_id\" exists"`
 
 语义（约定）：
 
 - `status == status`：`base.status == target.status`。
 - `header[Name] == header[Name]`：两个响应中同名 header 值必须相等。
 - `header[Name] ignore`：该 header 差异被忽略（常用于 `Date`、`Server` 等）。
-- `gjson <path> == gjson <path>`：
+- `gjson "<path>" == gjson "<path>"`：
   - `gjson.GetBytes(base.body, path) == gjson.GetBytes(target.body, path)`（这里的 `path` 使用 gjson 路径语法，例如 `data.user.id`）。
-- `gjson <path> ~= gjson <path> ± <tolerance>`：
+- `gjson "<path>" ~= gjson "<path>" ± <tolerance>`：
   - 取出的值为数值型，比较绝对差值是否不超过 `tolerance`。
-- `gjson <path> exists`：
-  - 仅验证字段存在（通常用于 `meta.request_id` 等）。
+- `gjson "<path>" exists`：
+  - 在 compare 模式下，要求 base 和 target 两侧的该字段都存在（通常用于 `meta.request_id` 等）；在单请求模式下，要求当前响应中存在该字段。
+- `status == 200`：要求 `base.status == 200` 且 `target.status == 200`。
+- `gjson "data.id" > 0`：要求 `gjson.GetBytes(base.body, "data.id") > 0` 且 `gjson.GetBytes(target.body, "data.id") > 0`。
 
 ### 4.2 内部结构建议
 
@@ -166,11 +168,13 @@ type CompareAssert struct {
 
 ### 4.3 与单请求断言的关系
 
-在 `compare` 模式中，`response_compare` 中的每一条 `assert` 表达式，都是在 **base 与 target 两个响应之间** 做比较，例如：
+在 `compare` 模式中，`response_compare` 中的每一条 `assert` 表达式，都是在 **base 与 target 两个响应之间** 做比较。根据语法不同，语义略有区别：
 
-- `"status == status"` 表示 `base.status == target.status`。
-- `"gjson data.user.id == gjson data.user.id"` 表示 `gjson.GetBytes(base.body, "data.user.id") == gjson.GetBytes(target.body, "data.user.id")`。
-- `"gjson meta.request_id exists"` 表示 base/target 响应中都要求存在该字段。
+- `"status == status"` 表示 `base.status == target.status`（字段 vs 字段）。
+- `"gjson \"data.user.id\" == gjson \"data.user.id\""` 表示 `gjson.GetBytes(base.body, "data.user.id") == gjson.GetBytes(target.body, "data.user.id")`（字段 vs 字段）。
+- `"status == 200"` 表示同时要求 `base.status == 200` 且 `target.status == 200`（字段 vs 常量）。
+- `"gjson \"success\" == true"` 表示同时要求 `gjson.GetBytes(base.body, "success") == true` 且 `gjson.GetBytes(target.body, "success") == true`（字段 vs 常量）。
+- `"gjson \"meta.request_id\" exists"` 表示 base/target 响应中都要求该字段存在。
 
 在单请求断言模式中，我们采用同样的 hurl 风格断言语法，只是比较对象变成了「单个响应 vs 期望值」，并通过 YAML 中的 `asserts` 多行字符串来承载，例如：
 
@@ -186,13 +190,82 @@ tests:
 
     asserts: |
       status == 200
-      header "Content-Type" contains "application/json"
+      header[Content-Type] contains "application/json"
       gjson "success" == true
       body contains "login success"
       duration_ms < 500
 ```
 
 两者共享同一套目标（`status` / `header` / `gjson` / `body` / `duration_ms`）和操作符语义，只是 compare 模式下会在内部同时取 base/target 两侧的值进行对比，而单请求模式下只针对单个响应进行断言。
+
+---
+
+## 5. compare 场景模式枚举
+
+为避免配置和实现上的歧义，这里集中定义 compare 场景支持的几种模式及其字段约束：
+
+- **mode: one_to_one（默认）**
+  - 适用场景：最基础的一对一比较，一个 base 对一个 target。
+  - 需要字段：
+    - `base`：基准请求名，对应 `requests.name`。
+    - `target`：对比请求名，对应 `requests.name`。
+  - 配置示例：
+
+    ```yaml
+    compare:
+      - name: cache_behavior_compare
+        # mode 省略时，默认为 one_to_one
+        base: cache_on
+        target: cache_off
+
+        response_compare: |
+          status == status
+          gjson "data" == gjson "data"
+    ```
+
+- **mode: one_to_many**
+  - 适用场景：一个基准请求与多个变体进行比较（如不同缓存策略、不同实验组）。
+  - 需要字段：
+    - `base`：基准请求名。
+    - `targets`：要与基准比较的一组请求名列表。
+  - 配置示例：
+
+    ```yaml
+    compare:
+      - name: cache_batch_compare
+        mode: one_to_many
+        base: base_cache_on
+        targets:
+          - cache_off
+          - cache_short
+          - cache_very_long
+
+        response_compare: |
+          status == status
+          gjson "data" == gjson "data"
+          gjson "meta.request_id" exists
+    ```
+
+- **mode: pair_by_index**
+  - 适用场景：左侧和右侧各有一组请求，按索引一一配对（如环境 A vs 环境 B 的接口对比）。
+  - 需要字段：
+    - `left_set`：左侧请求集合名，对应顶层 `request_sets.left`。
+    - `right_set`：右侧请求集合名，对应顶层 `request_sets.right`。
+  - 约束：
+    - `request_sets.left` 与 `request_sets.right` 的长度应相同；
+    - 只在 `mode: pair_by_index` 下使用 `request_sets` 结构。
+
+- **mode: group_by_field**
+  - 适用场景：请求按某个字段（如会话、业务线）分组，在组内按角色（role）选出 base 和 target 进行比较。
+  - 需要字段：
+    - `group_field`：用于分组的字段名，例如 `group`。
+    - `base_role`：在每个组内作为基准的角色值，例如 `base`。
+    - `target_role`：在每个组内作为对比对象的角色值，例如 `variant`。
+  - 要求：
+    - 顶层 `requests` 中每条请求都应包含 `group_field` 和 `role` 字段；
+    - 在每个分组内，至少要能找到一个 `base_role` 和一个 `target_role` 对应的请求。
+
+以上模式中，未显式设置 `mode` 时，默认为 `one_to_one`。实现时可以据此对配置进行校验，确保在不同 mode 下仅出现期望的字段组合，避免歧义。
 
 ---
 
@@ -226,7 +299,12 @@ requests:
 
 compare:
   - name: cache_batch_compare
+    mode: one_to_many
     base: base_cache_on
+    targets:
+      - cache_off
+      - cache_short
+      - cache_very_long
 
     response_compare: |
       status == status
@@ -362,11 +440,11 @@ Target : cache_off
      base:   application/json
      target: application/json
 
-[OK]  gjson data.user.id == gjson data.user.id
+[OK]  gjson "data.user.id" == gjson "data.user.id"
      base:   "123"
      target: "123"
 
-[FAIL] gjson data.items == gjson data.items
+[FAIL] gjson "data.items" == gjson "data.items"
      base:   [{"id":1,"name":"A"},{"id":2,"name":"B"}]
      target: [{"id":1,"name":"A"},{"id":2,"name":"B"},{"id":3,"name":"C"}]
 
@@ -379,10 +457,10 @@ Exit code: 1
 ```text
 === Pair: base_cache_on vs cache_off ===
 [OK]  status == status
-[OK]  gjson data == gjson data
+[OK]  gjson "data" == gjson "data"
 
 === Pair: base_cache_on vs cache_short ===
-[FAIL] gjson data == gjson data
+[FAIL] gjson "data" == gjson "data"
   base : ...
   target: ...
 
@@ -416,10 +494,15 @@ Summary:
 `response_compare` 中的断言语法与单请求断言对齐，支持以下几种类型（其中 `gjson` 使用 gjson 路径）：
 
 - `status == 200`：状态码检查
-- `header "Content-Type" contains "application/json"`：头部检查
+- `header[Content-Type] contains "application/json"`：头部检查
   - `gjson "data.id" > 0`：基于 gjson 路径的 JSON 字段检查
 - `body contains "success"`：响应体检查
 - `duration_ms < 500`：响应时间检查
+
+在 compare 模式中，这些「字段 vs 常量」语法的含义是：对 base 和 target 两侧都应用同一条单请求断言。例如：
+
+- `status == 200`：要求 `base.status == 200` 且 `target.status == 200`。
+- `gjson "data.id" > 0`：要求 `gjson.GetBytes(base.body, "data.id") > 0` 且 `gjson.GetBytes(target.body, "data.id") > 0`。
 
 具体语法见 [`docs/assert-design.md`](./assert-design.md)。
 
@@ -432,7 +515,7 @@ Summary:
 - **请求描述**：都使用 curl 命令字符串定义 HTTP 请求。
 - **断言语法**：都采用 hurl 风格的断言表达式（`gjson` 关键字底层使用 gjson）：
   - `status == 200`
-  - `header "Content-Type" contains "application/json"`
+  - `header[Content-Type] contains "application/json"`
   - `gjson "data.id" > 0`
   - `body contains "success"`
   - `duration_ms < 500`
@@ -446,29 +529,11 @@ response_compare: |
   gjson "meta.request_id" exists
 ```
 
-在单请求模式中，断言则写在 YAML 的 `asserts` 字段中，例如：
-
-```yaml
-version: "1.0"
-
-tests:
-  - name: "用户登录API"
-    curl: 'curl -X POST https://api.example.com/login -H "Content-Type: application/json" -d "{\"username\":\"test\",\"password\":\"123456\"}"'
-    connections: 10
-    duration: "5s"
-    threads: 1
-
-    asserts: |
-      status == 200
-      header "Content-Type" contains "application/json"
-      gjson "success" == true
-      body contains "login success"
-      duration_ms < 500
-```
-
 可以看到：
 
-- **compare 模式**：`assert` 表达式用于「base ↔ target」两边的字段对比；
+- **compare 模式**：`assert` 表达式用于「base ↔ target」两边的字段对比：
+  - 字段 vs 字段：如 `status == status`、`gjson "data" == gjson "data"`，表示左、右两侧字段相互比较；
+  - 字段 vs 常量：如 `status == 200`、`gjson "data.id" > 0`，表示对 base 和 target 两侧分别应用同一条单请求断言，要求两边都满足；
 - **单请求模式**：`asserts` 中的每行表达式用于「请求 ↔ 期望值」的检查。
 
-二者共享同一套目标与操作符定义，详细语法见 [`docs/assert-design.md`](./assert-design.md)。
+二者共享同一套目标与操作符定义（包括 `==`、`~=`、`exists`、`ignore`、比较运算符、`contains` 等），详细语法见 [`docs/assert-design.md`](./assert-design.md)。
