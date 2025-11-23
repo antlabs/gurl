@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1763393755226,
+  "lastUpdate": 1763883643895,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -1008,6 +1008,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "15404581 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "cca6c2bd1b7be3847fb618e3f7b773bee4c7f992",
+          "message": "feat: add compare mode for response comparison between base and target endpoints\n\n- Added --compare-config/-f and --compare-name/-n flags to enable compare mode execution\n- Implemented runCompare function to load configuration, execute scenarios, and display results\n- Added result grouping by PairLabel to support batch comparison modes (one_to_many, pair_by_index, group_by_field)\n- Display comparison details including pass/fail status, base/target values, and failure reasons\n- Compare mode takes",
+          "timestamp": "2025-11-23T15:25:38+08:00",
+          "tree_id": "91235ce534d5312d987c37d230532a4a39b68fd3",
+          "url": "https://github.com/antlabs/gurl/commit/cca6c2bd1b7be3847fb618e3f7b773bee4c7f992"
+        },
+        "date": 1763883643610,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100079815,
+            "unit": "ns/op\t 5072578 B/op\t   62558 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100079815,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 5072578,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 62558,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 408.4,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "14979574 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 408.4,
+            "unit": "ns/op",
+            "extra": "14979574 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "14979574 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "14979574 times\n4 procs"
           }
         ]
       }
