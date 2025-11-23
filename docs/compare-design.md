@@ -153,8 +153,8 @@ compare:
 type CompareAssert struct {
     Scope     string  // "status" / "header" / "gjson"
     Key       string  // header name 或 gjson 路径
-    Operator  string  // "==", "~=", "exists", "ignore"
-    Tolerance float64 // 近似比较的容忍度，可选
+    Operator  string  // 比较操作符，如 "==", "~=", "exists", "ignore", "contains", ">", "<" 等
+    Tolerance float64 // 近似比较的容忍度（用于近似比较或数值比较），可选
 }
 ```
 
@@ -422,7 +422,7 @@ gurl compare -f cache_compare.yaml -n cache_behavior_compare
 1. 读取配置文件，解析 `requests`、`compare` 等。
 2. 根据场景（`base/target` 或批量模式）确定要发送的请求对。
 3. 用 `curl` 字符串解析成内部请求结构并发起 HTTP 请求。
-4. 对每一对响应按 `compare_fields` 和 `response_compare`/`gjson_compare` 进行比对。
+4. 对每一对响应按 `response_compare` 逐条断言，形成每一对的对比结果。
 5. 输出每一对的断言结果和汇总。
 
 ### 7.2 预期输出示意
@@ -482,7 +482,7 @@ Summary:
   - 为每个请求对发送 HTTP 请求，收集响应（status/headers/body）。
 - **断言层**：
   - 实现 hurl 风格 `assert` 字符串解析为 `CompareAssert`。
-  - 使用 gjson 对 body 进行路径提取，并执行 equals/approx/exists/ignore 等逻辑。
+  - 使用 gjson 对 body 进行路径提取，并执行 equals/approx/exists/ignore、比较运算符（如 `>`, `<`, `>=`, `<=`, `!=`）、`contains` 等逻辑（与第 10 节和 `assert-design` 中的操作符集合保持一致）。
 - **输出层**：
   - 支持人类可读的文本输出，显示每条断言的 [OK]/[FAIL] 与差异细节。
   - 可考虑增加 machine-readable 格式（如 JSON），用于 CI/自动化。
