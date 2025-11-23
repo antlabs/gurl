@@ -13,6 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/antlabs/gurl/internal/asserts"
 	"github.com/antlabs/gurl/internal/config"
 	"github.com/antlabs/gurl/internal/stats"
 	"github.com/antlabs/httparser"
@@ -37,7 +38,12 @@ type HTTPParseResult struct {
 	headersComplete  bool
 	messageComplete  bool
 	hasContentLength bool
-	// body             []byte
+	// 为 asserts 收集的数据
+	enableAsserts bool
+	maxBodySize   int64
+	headers       http.Header
+	body          []byte
+	currentHeader string
 }
 
 func (h *HTTPParseResult) Reset() {
@@ -46,6 +52,15 @@ func (h *HTTPParseResult) Reset() {
 	h.headersComplete = false
 	h.messageComplete = false
 	h.hasContentLength = false
+	if h.enableAsserts {
+		for k := range h.headers {
+			delete(h.headers, k)
+		}
+		if h.body != nil {
+			h.body = h.body[:0]
+		}
+		h.currentHeader = ""
+	}
 }
 
 // ConnSession 每个连接的会话状态
@@ -68,6 +83,7 @@ type HTTPClientHandler struct {
 	results      *stats.Results
 	maxBodySize  int64
 	rateLimiter  ratelimit.Limiter
+	asserts      string
 }
 
 // NewPulseBenchmark 创建新的pulse基准测试实例
@@ -82,8 +98,11 @@ func NewPulseBenchmark(cfg config.Config, req *http.Request) *PulseBenchmark {
 // OnOpen 连接建立时的回调
 func (h *HTTPClientHandler) OnOpen(c *pulse.Conn) {
 	session := &ConnSession{
-		startTime:    time.Now(),
-		parseResult:  &HTTPParseResult{},
+		startTime: time.Now(),
+		parseResult: &HTTPParseResult{
+			enableAsserts: h.asserts != "",
+			maxBodySize:   h.maxBodySize,
+		},
 		request:      h.request,
 		requestCount: h.requestCount,
 		errorCount:   h.errorCount,
@@ -139,6 +158,21 @@ func (h *HTTPClientHandler) OnData(c *pulse.Conn, data []byte) {
 		session.results.AddLatency(duration)
 		session.results.AddStatusCode(session.parseResult.statusCode)
 		session.results.AddBytes(session.parseResult.contentLength)
+
+		// 如果配置了断言，则执行断言
+		if h.asserts != "" && session.parseResult.enableAsserts {
+			assertResp := &asserts.HTTPResponse{
+				Status:   session.parseResult.statusCode,
+				Headers:  session.parseResult.headers,
+				Body:     session.parseResult.body,
+				Duration: duration,
+			}
+
+			if errAssert := asserts.Evaluate(h.asserts, assertResp); errAssert != nil {
+				atomic.AddInt64(h.errorCount, 1)
+				session.results.AddError(errAssert)
+			}
+		}
 
 		// 重置解析器状态，准备下次请求
 		session.parseResult.Reset()
@@ -198,7 +232,19 @@ var httpParserSetting = httparser.Setting{
 				r.headersComplete = false
 				r.messageComplete = false
 				r.contentLength = 0
-				// r.body = r.body[:0] // 重用slice，避免重新分配
+				if r.enableAsserts {
+					if r.headers == nil {
+						r.headers = make(http.Header)
+					} else {
+						for k := range r.headers {
+							delete(r.headers, k)
+						}
+					}
+					if r.body != nil {
+						r.body = r.body[:0]
+					}
+					r.currentHeader = ""
+				}
 			}
 		}
 	},
@@ -215,6 +261,11 @@ var httpParserSetting = httparser.Setting{
 				}
 			}
 		}
+		if result := p.GetUserData(); result != nil {
+			if r, ok := result.(*HTTPParseResult); ok && r.enableAsserts {
+				r.currentHeader = string(buf)
+			}
+		}
 	},
 	HeaderValue: func(p *httparser.Parser, buf []byte, _ int) {
 		// HTTP header value
@@ -225,6 +276,12 @@ var httpParserSetting = httparser.Setting{
 					if contentLength, err := strconv.Atoi(string(buf)); err == nil {
 						r.contentLength = int64(contentLength)
 					}
+				}
+				if r.enableAsserts && r.currentHeader != "" {
+					if r.headers == nil {
+						r.headers = make(http.Header)
+					}
+					r.headers.Add(r.currentHeader, string(buf))
 				}
 			}
 		}
@@ -241,11 +298,17 @@ var httpParserSetting = httparser.Setting{
 		// 累积响应体数据并检查大小限制
 		if result := p.GetUserData(); result != nil {
 			if r, ok := result.(*HTTPParseResult); ok {
-				// r.body = append(r.body, buf...)
 				r.contentLength += int64(len(buf))
-				// 检查body大小限制（例如1MB）
-				// TODO: 实现body大小限制处理逻辑
-				_ = r.contentLength // 暂时忽略大小检查
+				if r.enableAsserts && r.maxBodySize > 0 {
+					remaining := int(r.maxBodySize) - len(r.body)
+					if remaining > 0 {
+						if remaining < len(buf) {
+							r.body = append(r.body, buf[:remaining]...)
+						} else {
+							r.body = append(r.body, buf...)
+						}
+					}
+				}
 			}
 		}
 	},
@@ -305,6 +368,7 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 			results:      results,
 			maxBodySize:  1 << 20, // 1MB限制
 			rateLimiter:  limiter,
+			asserts:      pb.config.Asserts,
 		}),
 	)
 

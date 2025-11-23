@@ -61,10 +61,14 @@ gurl 当前计划支持以下断言目标：
   - 示例：`status == 200`
 
 - `header "<Name>"`  
-  - 指定响应头  
-  - 示例：  
-    - `header "Content-Type" == "application/json"`  
-    - `header "X-Request-Id" exists`
+- 指定响应头，对应 `http.Header.Get(Name)` 的字符串值。  
+- **字符串比较：** 使用字符串运算符 `==`、`!=`、`contains`、`not_contains`、`starts_with`、`ends_with`，右侧字符串必须用双引号包裹，例如：  
+  - `header "Content-Type" == "application/json"`  
+  - `header "Content-Type" contains "json"`  
+- **存在性检查：** 支持无右值的 `exists` / `not_exists`：  
+  - `header "X-Request-Id" exists`  
+  - `header "X-Debug-Flag" not_exists`  
+- **不支持：** `header` 目前不支持 `matches /.../` 正则运算符（正则仅在 `gjson` 目标中可用）。
 
 - `gjson "<path>"`  
   - 针对 JSON 响应体，使用 [gjson](https://github.com/tidwall/gjson) 路径表达式进行字段提取（例如 `friends.#(last=="Murphy").first`、`data.items.0.name`）  
@@ -101,10 +105,10 @@ gurl 当前计划支持以下断言目标：
   - `contains` / `not_contains`
   - `starts_with` / `ends_with`
 
-- **正则匹配**
-  - `matches`  
-  - 右侧为正则表达式，使用 `/.../` 包裹：
-    - `gjson "token" matches /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/`
+- **正则匹配（仅 `gjson` 支持）**
+-  - `matches`  
+-  - 右侧为正则表达式，使用 `/.../` 包裹，仅用于 `gjson` 目标：
+-    - `gjson "token" matches /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/`
 
 - **存在性检查**
   - `exists` / `not_exists`  
