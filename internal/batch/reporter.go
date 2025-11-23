@@ -43,9 +43,27 @@ func (r *Reporter) GenerateReport(result *BatchResult) string {
 		report.WriteString(fmt.Sprintf("%d. %s\n", i+1, test.Name))
 		report.WriteString(fmt.Sprintf("   Duration: %v\n", test.Duration))
 
-		if test.Error != nil {
+		var statsErrorCount int
+		if test.Stats != nil {
+			statsErrorCount = len(test.Stats.GetErrors())
+		}
+
+		// A test is considered FAILED if there is a top-level error
+		// or any per-request errors (e.g. assertion failures).
+		if test.Error != nil || statsErrorCount > 0 {
 			report.WriteString("   Status: FAILED\n")
-			report.WriteString(fmt.Sprintf("   Error: %v\n", test.Error))
+			if test.Error != nil {
+				report.WriteString(fmt.Sprintf("   Error: %v\n", test.Error))
+			}
+			if test.Stats != nil {
+				report.WriteString(fmt.Sprintf("   Requests: %d\n", test.Stats.TotalRequests))
+				rps := float64(test.Stats.TotalRequests) / test.Stats.Duration.Seconds()
+				report.WriteString(fmt.Sprintf("   RPS: %.2f\n", rps))
+				report.WriteString(fmt.Sprintf("   Avg Latency: %v\n", test.Stats.GetAverageLatency()))
+				if statsErrorCount > 0 {
+					report.WriteString(fmt.Sprintf("   Errors: %d\n", statsErrorCount))
+				}
+			}
 			failedCount++
 		} else {
 			report.WriteString("   Status: SUCCESS\n")
@@ -54,10 +72,6 @@ func (r *Reporter) GenerateReport(result *BatchResult) string {
 				rps := float64(test.Stats.TotalRequests) / test.Stats.Duration.Seconds()
 				report.WriteString(fmt.Sprintf("   RPS: %.2f\n", rps))
 				report.WriteString(fmt.Sprintf("   Avg Latency: %v\n", test.Stats.GetAverageLatency()))
-				errorCount := int64(len(test.Stats.GetErrors()))
-				if errorCount > 0 {
-					report.WriteString(fmt.Sprintf("   Errors: %d\n", errorCount))
-				}
 			}
 			successCount++
 		}

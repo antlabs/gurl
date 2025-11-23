@@ -97,8 +97,12 @@ func (e *Executor) Execute(ctx context.Context, batchConfig *config.BatchConfig,
 	// Calculate success rate
 	successCount := 0
 	for _, result := range results {
+		// A test is considered successful only if there is no top-level error
+		// and no per-request errors recorded in stats (e.g. assertion failures).
 		if result.Error == nil {
-			successCount++
+			if result.Stats == nil || len(result.Stats.GetErrors()) == 0 {
+				successCount++
+			}
 		}
 	}
 	successRate := float64(successCount) / float64(len(results)) * 100
@@ -235,8 +239,12 @@ func (e *Executor) ExecuteSequential(ctx context.Context, batchConfig *config.Ba
 	// Calculate success rate
 	successCount := 0
 	for _, result := range results {
+		// A test is considered successful only if there is no top-level error
+		// and no per-request errors recorded in stats (e.g. assertion failures).
 		if result.Error == nil {
-			successCount++
+			if result.Stats == nil || len(result.Stats.GetErrors()) == 0 {
+				successCount++
+			}
 		}
 	}
 	successRate := float64(successCount) / float64(len(results)) * 100

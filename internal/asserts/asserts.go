@@ -111,7 +111,16 @@ func evalHeader(expr string, resp *HTTPResponse) error {
 	}
 
 	actual := resp.Headers.Get(name)
-	return compareStrings(actual, op, expected)
+
+	// Support quoted string literals in DSL, e.g.
+	// header "Content-Type" contains "application/json"
+	// so we need to unquote the expected token before comparison.
+	unquotedExpected, err := unquoteMaybe(expected)
+	if err != nil {
+		return err
+	}
+
+	return compareStrings(actual, op, unquotedExpected)
 }
 
 func evalBody(expr string, resp *HTTPResponse) error {
@@ -121,7 +130,15 @@ func evalBody(expr string, resp *HTTPResponse) error {
 	}
 
 	body := string(resp.Body)
-	return compareStrings(body, op, expected)
+
+	// Allow quoted string literals for body comparisons, e.g.
+	// body contains "OK"
+	unquotedExpected, err := unquoteMaybe(expected)
+	if err != nil {
+		return err
+	}
+
+	return compareStrings(body, op, unquotedExpected)
 }
 
 func evalDuration(expr string, resp *HTTPResponse) error {
