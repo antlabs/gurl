@@ -28,6 +28,7 @@ type BatchTest struct {
 	Timeout     string `yaml:"timeout,omitempty" json:"timeout,omitempty"`
 	Verbose     bool   `yaml:"verbose,omitempty" json:"verbose,omitempty"`
 	UseNetHTTP  bool   `yaml:"use_nethttp,omitempty" json:"use_nethttp,omitempty"`
+	Asserts     string `yaml:"asserts,omitempty" json:"asserts,omitempty"`
 }
 
 // ToConfig converts BatchTest to Config with defaults
@@ -77,6 +78,9 @@ func (bt *BatchTest) ToConfig(defaults *Config) (*Config, error) {
 
 	// Set curl command
 	cfg.CurlCommand = bt.Curl
+
+	// Set asserts text for this test (if any)
+	cfg.Asserts = bt.Asserts
 
 	return cfg, nil
 }

@@ -144,6 +144,10 @@ func parseInlineTests(inlineTests []any) (*config.BatchConfig, error) {
 			batchTest.UseNetHTTP = useNetHTTP
 		}
 
+		if asserts, ok := testMap["asserts"].(string); ok {
+			batchTest.Asserts = asserts
+		}
+
 		batchConfig.Tests = append(batchConfig.Tests, batchTest)
 	}
 

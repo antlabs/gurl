@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/antlabs/gurl/internal/asserts"
 	"github.com/antlabs/gurl/internal/config"
 	"github.com/antlabs/gurl/internal/stats"
 	"go.uber.org/ratelimit"
@@ -231,14 +232,40 @@ func (b *NetHTTPBenchmark) runConnection(ctx context.Context, requestCount, erro
 			atomic.AddInt64(errorCount, 1)
 			results.AddError(err)
 		} else {
-			// 读取并丢弃响应体数据，计算字节数
-			bytesRead, _ = io.Copy(io.Discard, resp.Body)
-			_ = resp.Body.Close()
-			statusCode = resp.StatusCode
+			// 根据是否配置了断言决定是否需要读取响应体
+			if b.config.Asserts != "" {
+				// 需要做断言：读取完整响应体，保留 headers 和 duration
+				bodyBytes, _ := io.ReadAll(resp.Body)
+				_ = resp.Body.Close()
+				bytesRead = int64(len(bodyBytes))
+				statusCode = resp.StatusCode
 
-			results.AddLatency(duration)
-			results.AddStatusCode(statusCode)
-			results.AddBytes(bytesRead)
+				results.AddLatency(duration)
+				results.AddStatusCode(statusCode)
+				results.AddBytes(bytesRead)
+
+				// 构造断言所需的 HTTPResponse 并执行断言
+				assertResp := &asserts.HTTPResponse{
+					Status:   statusCode,
+					Headers:  resp.Header,
+					Body:     bodyBytes,
+					Duration: duration,
+				}
+
+				if errAssert := asserts.Evaluate(b.config.Asserts, assertResp); errAssert != nil {
+					atomic.AddInt64(errorCount, 1)
+					results.AddError(errAssert)
+				}
+			} else {
+				// 未配置断言：保持原有高性能行为，仅统计字节数
+				bytesRead, _ = io.Copy(io.Discard, resp.Body)
+				_ = resp.Body.Close()
+				statusCode = resp.StatusCode
+
+				results.AddLatency(duration)
+				results.AddStatusCode(statusCode)
+				results.AddBytes(bytesRead)
+			}
 		}
 
 		// 如果是多请求模式，记录每个 URL 的统计

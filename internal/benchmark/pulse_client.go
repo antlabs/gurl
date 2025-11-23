@@ -18,6 +18,7 @@ import (
 	"github.com/antlabs/httparser"
 	"github.com/antlabs/pulse"
 	"github.com/antlabs/pulse/core"
+	"go.uber.org/ratelimit"
 )
 
 var bytesContentLength = []byte("Content-Length")
@@ -66,6 +67,7 @@ type HTTPClientHandler struct {
 	errorCount   *int64
 	results      *stats.Results
 	maxBodySize  int64
+	rateLimiter  ratelimit.Limiter
 }
 
 // NewPulseBenchmark 创建新的pulse基准测试实例
@@ -93,6 +95,11 @@ func (h *HTTPClientHandler) OnOpen(c *pulse.Conn) {
 	session.parser.SetUserData(session.parseResult)
 
 	c.SetSession(session)
+
+	// 如果配置了频率限制，在发送第一个请求前获取令牌
+	if h.rateLimiter != nil {
+		h.rateLimiter.Take()
+	}
 
 	// 构建HTTP请求
 	httpReq := h.buildHTTPRequest()
@@ -137,6 +144,11 @@ func (h *HTTPClientHandler) OnData(c *pulse.Conn, data []byte) {
 		session.parseResult.Reset()
 		session.parser.SetUserData(session.parseResult)
 		session.startTime = time.Now()
+
+		// 在发送下一个请求前应用频率限制（如果配置了Rate）
+		if h.rateLimiter != nil {
+			h.rateLimiter.Take()
+		}
 
 		// 立即发送下一个请求（持续压测）
 		httpReq := h.buildHTTPRequest()
@@ -261,6 +273,12 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 	var requestCount int64
 	var errorCount int64
 
+	// 创建 Uber 限流器（所有连接共享，与 NetHTTPBenchmark 行为一致）
+	var limiter ratelimit.Limiter
+	if pb.config.Rate > 0 {
+		limiter = ratelimit.New(pb.config.Rate)
+	}
+
 	// 创建 Live UI（如果启用）
 	var liveUI *LiveUI
 	var uiErr error
@@ -286,6 +304,7 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 			errorCount:   &errorCount,
 			results:      results,
 			maxBodySize:  1 << 20, // 1MB限制
+			rateLimiter:  limiter,
 		}),
 	)
 

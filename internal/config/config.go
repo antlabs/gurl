@@ -33,6 +33,9 @@ type Config struct {
 
 	// Engine options
 	UseNetHTTP bool // Force use standard library net/http instead of pulse
+
+	// Assertions
+	Asserts string // Assertions for single HTTP request, used in batch tests
 }
 
 // Validate checks if the configuration is valid
