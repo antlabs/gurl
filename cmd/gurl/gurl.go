@@ -15,6 +15,7 @@ import (
 	"github.com/antlabs/gurl/internal/api"
 	"github.com/antlabs/gurl/internal/batch"
 	"github.com/antlabs/gurl/internal/benchmark"
+	"github.com/antlabs/gurl/internal/compare"
 	"github.com/antlabs/gurl/internal/config"
 	"github.com/antlabs/gurl/internal/mcp"
 	"github.com/antlabs/gurl/internal/mock"
@@ -77,6 +78,10 @@ type Args struct {
 	MockResponse   string `clop:"--mock-response" usage:"Custom response body"`
 	MockStatusCode int    `clop:"--mock-status" usage:"HTTP status code to return" default:"200"`
 	MockConfig     string `clop:"--mock-config" usage:"Path to mock server configuration file (YAML/JSON)"`
+
+	// Compare 选项（阶段1：使用 --compare-config/-f 与 --compare-name/-n）
+	CompareConfig string `clop:"--compare-config;-f" usage:"Path to compare configuration file (YAML/JSON)"`
+	CompareName   string `clop:"--compare-name;-n" usage:"Name of compare scenario to run"`
 
 	// 位置参数
 	URL string `clop:"args=url" usage:"Target URL for benchmarking"`
@@ -230,6 +235,92 @@ func runBenchmark(args *Args) error {
 	// 打印结果
 	benchmark.PrintResults(results, cfg)
 
+	return nil
+}
+
+// runCompare 执行 compare 模式（一对一场景）
+func runCompare(args *Args) error {
+	if args.CompareConfig == "" {
+		return fmt.Errorf("compare-config is required")
+	}
+	if args.CompareName == "" {
+		return fmt.Errorf("compare-name is required")
+	}
+
+	// 加载 compare 配置
+	cmpCfg, err := config.LoadCompareConfig(args.CompareConfig)
+	if err != nil {
+		return fmt.Errorf("failed to load compare config: %w", err)
+	}
+
+	// 执行指定场景
+	results, passed, failed, err := compare.RunScenario(cmpCfg, args.CompareName)
+	if err != nil {
+		return fmt.Errorf("failed to run compare scenario: %w", err)
+	}
+
+	// 查找场景以获得 base/target 名称
+	var scenario *config.CompareScenario
+	for i := range cmpCfg.Scenarios {
+		if cmpCfg.Scenarios[i].Name == args.CompareName {
+			scenario = &cmpCfg.Scenarios[i]
+			break
+		}
+	}
+
+	fmt.Printf("Scenario: %s\n", args.CompareName)
+	if scenario != nil {
+		fmt.Printf("Mode   : %s\n", scenario.Mode)
+		if scenario.Base != "" {
+			fmt.Printf("Base   : %s\n", scenario.Base)
+		}
+		if scenario.Target != "" {
+			fmt.Printf("Target : %s\n", scenario.Target)
+		}
+	}
+	fmt.Println()
+
+	// 按 PairLabel 对结果分组，便于批量模式下分块输出
+	pairs := make(map[string][]compare.AssertionResult)
+	order := make([]string, 0)
+	for _, r := range results {
+		label := r.PairLabel
+		if label == "" {
+			label = "(single pair)"
+		}
+		if _, ok := pairs[label]; !ok {
+			order = append(order, label)
+		}
+		pairs[label] = append(pairs[label], r)
+	}
+
+	for _, label := range order {
+		fmt.Printf("=== Pair: %s ===\n", label)
+		for _, r := range pairs[label] {
+			status := "FAIL"
+			if r.OK {
+				status = "OK"
+			}
+			fmt.Printf("[%s] %s\n", status, r.Line)
+			if r.BaseValue != "" || r.TargetValue != "" {
+				if r.BaseValue != "" {
+					fmt.Printf("     base:   %s\n", r.BaseValue)
+				}
+				if r.TargetValue != "" {
+					fmt.Printf("     target: %s\n", r.TargetValue)
+				}
+			}
+			if !r.OK && r.Message != "" {
+				fmt.Printf("     reason: %s\n", r.Message)
+			}
+		}
+		fmt.Println()
+	}
+
+	fmt.Printf("Summary: %d passed, %d failed\n", passed, failed)
+	if failed > 0 {
+		return fmt.Errorf("compare scenario failed")
+	}
 	return nil
 }
 
@@ -400,6 +491,15 @@ func main() {
 		fmt.Print(template.PrintTemplateExamples())
 		fmt.Print("\n\n")
 		fmt.Print(template.GetQuickStartGuide())
+		return
+	}
+
+	// 检查是否为 compare 模式（优先于批量/基准测试）
+	if args.CompareConfig != "" {
+		if err := runCompare(args); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
 		return
 	}
 
