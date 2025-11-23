@@ -62,6 +62,16 @@ func (r *Reporter) GenerateReport(result *BatchResult) string {
 				report.WriteString(fmt.Sprintf("   Avg Latency: %v\n", test.Stats.GetAverageLatency()))
 				if statsErrorCount > 0 {
 					report.WriteString(fmt.Sprintf("   Errors: %d\n", statsErrorCount))
+					// Print a few sample errors (typically assertion failures) in a
+					// compact, readable block.
+					report.WriteString("   Assertion Errors:\n")
+					const maxSampleErrors = 5
+					for idx, err := range test.Stats.GetErrors() {
+						if idx >= maxSampleErrors {
+							break
+						}
+						report.WriteString(fmt.Sprintf("     - #%d: %v\n", idx+1, err))
+					}
 				}
 			}
 			failedCount++
@@ -127,8 +137,24 @@ func (r *Reporter) GenerateReport(result *BatchResult) string {
 	if failedCount > 0 {
 		report.WriteString("=== Failed Tests ===\n\n")
 		for _, test := range result.Tests {
-			if test.Error != nil {
-				report.WriteString(fmt.Sprintf("- %s: %v\n", test.Name, test.Error))
+			var statsErrorCount int
+			if test.Stats != nil {
+				statsErrorCount = len(test.Stats.GetErrors())
+			}
+
+			if test.Error != nil || statsErrorCount > 0 {
+				if test.Error != nil {
+					report.WriteString(fmt.Sprintf("- %s\n", test.Name))
+					report.WriteString(fmt.Sprintf("    Top-level error: %v\n", test.Error))
+				} else if statsErrorCount > 0 {
+					// Show first assertion/response error as a summary
+					errs := test.Stats.GetErrors()
+					if len(errs) > 0 {
+						report.WriteString(fmt.Sprintf("- %s\n", test.Name))
+						report.WriteString(fmt.Sprintf("    First error: %v\n", errs[0]))
+						report.WriteString(fmt.Sprintf("    Total errors: %d\n", statsErrorCount))
+					}
+				}
 			}
 		}
 		report.WriteString("\n")
