@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1763911583553,
+  "lastUpdate": 1763914614768,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -1224,6 +1224,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "14873554 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "b8d086a517e3ed0c02d2467884fcd8df46168e6b",
+          "message": "docs: add header assertion documentation and implement assertion support in pulse_client\n\n- Documented header assertion syntax with string comparison operators (==, !=, contains, starts_with, ends_with)\n- Clarified that header assertions use http.Header.Get() string values and require quoted strings\n- Added existence checks (exists/not_exists) for header assertions\n- Noted that regex matches operator is only supported for gjson targets, not headers\n- Implemented assertion evaluation in pulse_client to",
+          "timestamp": "2025-11-23T23:53:44+08:00",
+          "tree_id": "bb830caededaf28387b9b1bace8511e5c13be5ba",
+          "url": "https://github.com/antlabs/gurl/commit/b8d086a517e3ed0c02d2467884fcd8df46168e6b"
+        },
+        "date": 1763914614357,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100092003,
+            "unit": "ns/op\t 4986079 B/op\t   61486 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100092003,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 4986079,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 61486,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 409.4,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "12963630 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 409.4,
+            "unit": "ns/op",
+            "extra": "12963630 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "12963630 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "12963630 times\n4 procs"
           }
         ]
       }
