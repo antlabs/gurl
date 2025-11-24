@@ -4,7 +4,7 @@ go 1.24.1
 
 require (
 	github.com/antlabs/httparser v0.0.11
-	github.com/antlabs/pcurl v0.0.10
+	github.com/antlabs/pcurl v0.0.11
 	github.com/antlabs/pulse v0.0.0-20250727044511-e31dbf68d422
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/google/uuid v1.6.0
