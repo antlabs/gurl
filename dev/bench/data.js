@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1763914614768,
+  "lastUpdate": 1764001131572,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -1296,6 +1296,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "12963630 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "1b3bf3fe6222b47524a2a5af9a91a5eba9f1a5e9",
+          "message": "feat: add total request limit support with -n/--requests flag\n\n- Added --requests/-n flag to limit total number of requests (0=unlimited, duration-limited)\n- Implemented atomic CAS-based request counting in nethttp_client and pulse_client to enforce request limit\n- Modified worker goroutines to cancel context when request limit is reached\n- Split request counting logic: CAS increment when Requests>0, simple increment when Requests=0\n- Improved error reporting to group identical errors and show count",
+          "timestamp": "2025-11-25T00:18:10+08:00",
+          "tree_id": "ff38271cdebb551bdbeb4ccdeda940f024c3d8aa",
+          "url": "https://github.com/antlabs/gurl/commit/1b3bf3fe6222b47524a2a5af9a91a5eba9f1a5e9"
+        },
+        "date": 1764001131113,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100093181,
+            "unit": "ns/op\t 5168361 B/op\t   63751 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100093181,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 5168361,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 63751,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 411,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "14704760 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 411,
+            "unit": "ns/op",
+            "extra": "14704760 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "14704760 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "14704760 times\n4 procs"
           }
         ]
       }
