@@ -13,6 +13,7 @@ type Config struct {
 	Threads     int           // Number of threads
 	Rate        int           // Requests per second (0 = unlimited)
 	Timeout     time.Duration // Request timeout
+	Requests    int64         // Total number of requests to perform (0 = unlimited, duration-limited)
 
 	// Curl parsing
 	CurlCommand  string // Curl command to parse
@@ -48,9 +49,9 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("threads must be greater than 0")
 	}
 
-	if c.Duration <= 0 {
-		return fmt.Errorf("duration must be greater than 0")
-	}
+	// if c.Duration <= 0 && c.Requests <= 0 {
+	// 	return fmt.Errorf("duration or requests must be greater than 0")
+	// }
 
 	if c.Rate < 0 {
 		return fmt.Errorf("rate cannot be negative")

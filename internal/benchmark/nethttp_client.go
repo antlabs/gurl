@@ -102,7 +102,7 @@ func NewNetHTTPBenchmarkWithMultipleRequests(cfg config.Config, requests []*http
 func (b *NetHTTPBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 	results := stats.NewResults()
 
-	// 创建上下文，在指定时间后取消
+	// 创建上下文，在指定时间后取消；如果配置了最大请求数，也会在达到后取消
 	testCtx, cancel := context.WithTimeout(ctx, b.config.Duration)
 	defer cancel()
 
@@ -134,7 +134,7 @@ func (b *NetHTTPBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 		wg.Add(1)
 		go func(threadID int) {
 			defer wg.Done()
-			b.runWorker(testCtx, threadID, &requestCount, &errorCount, results)
+			b.runWorker(testCtx, cancel, threadID, &requestCount, &errorCount, results)
 		}(i)
 	}
 
@@ -154,7 +154,7 @@ func (b *NetHTTPBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 }
 
 // runWorker runs a single worker thread
-func (b *NetHTTPBenchmark) runWorker(ctx context.Context, threadID int, requestCount, errorCount *int64, results *stats.Results) {
+func (b *NetHTTPBenchmark) runWorker(ctx context.Context, cancel context.CancelFunc, threadID int, requestCount, errorCount *int64, results *stats.Results) {
 	connectionsPerThread := b.config.Connections / b.config.Threads
 	if threadID < b.config.Connections%b.config.Threads {
 		connectionsPerThread++
@@ -167,20 +167,42 @@ func (b *NetHTTPBenchmark) runWorker(ctx context.Context, threadID int, requestC
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			b.runConnection(ctx, requestCount, errorCount, results)
+			b.runConnection(ctx, cancel, requestCount, errorCount, results)
 		}()
 	}
 	wg.Wait()
 }
 
 // runConnection handles a single connection's requests
-func (b *NetHTTPBenchmark) runConnection(ctx context.Context, requestCount, errorCount *int64, results *stats.Results) {
+func (b *NetHTTPBenchmark) runConnection(ctx context.Context, cancel context.CancelFunc, requestCount, errorCount *int64, results *stats.Results) {
 	for {
 		// 先检查 context 是否已取消
 		select {
 		case <-ctx.Done():
 			return
 		default:
+		}
+
+		// 如果配置了最大请求数（Requests > 0），使用 CAS 控制总请求次数
+		if b.config.Requests > 0 {
+			for {
+				cur := atomic.LoadInt64(requestCount)
+				if cur >= b.config.Requests {
+					// 已达到上限，取消测试并退出
+					if cancel != nil {
+						cancel()
+					}
+					return
+				}
+				// 尝试占用一个请求名额
+				if atomic.CompareAndSwapInt64(requestCount, cur, cur+1) {
+					// 如果这是最后一个名额，占用后立即取消上下文，通知其它 goroutine 退出
+					if cur+1 >= b.config.Requests && cancel != nil {
+						cancel()
+					}
+					break
+				}
+			}
 		}
 
 		// Uber 限流器：自动等待并获取令牌
@@ -223,7 +245,10 @@ func (b *NetHTTPBenchmark) runConnection(ctx context.Context, requestCount, erro
 		resp, err := b.client.Do(clonedReq)
 		duration := time.Since(start)
 
-		atomic.AddInt64(requestCount, 1)
+		// 如果没有配置 Requests（=0），使用简单的每请求计数
+		if b.config.Requests == 0 {
+			atomic.AddInt64(requestCount, 1)
+		}
 
 		var bytesRead int64
 		var statusCode int

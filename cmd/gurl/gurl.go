@@ -32,6 +32,7 @@ type Args struct {
 	Threads     int           `clop:"-t;--threads" usage:"Number of threads to use" default:"2"`
 	Rate        int           `clop:"-R;--rate" usage:"Work rate (requests/sec) 0=unlimited" default:"0"`
 	Timeout     time.Duration `clop:"--timeout" usage:"Socket/request timeout" default:"30s"`
+	Requests    int64         `clop:"-n;--requests" usage:"Total number of requests to perform (0=unlimited, duration-limited)" default:"0"`
 
 	// curl解析选项
 	CurlCommand  string `clop:"--parse-curl" usage:"Parse curl command and use it for benchmarking"`
@@ -81,7 +82,7 @@ type Args struct {
 
 	// Compare 选项（阶段1：使用 --compare-config/-f 与 --compare-name/-n）
 	CompareConfig string `clop:"--compare-config;-f" usage:"Path to compare configuration file (YAML/JSON)"`
-	CompareName   string `clop:"--compare-name;-n" usage:"Name of compare scenario to run"`
+	CompareName   string `clop:"--compare-name" usage:"Name of compare scenario to run"`
 
 	// 位置参数
 	URL string `clop:"args=url" usage:"Target URL for benchmarking"`
@@ -95,6 +96,7 @@ func (a *Args) toConfig() config.Config {
 		Threads:      a.Threads,
 		Rate:         a.Rate,
 		Timeout:      a.Timeout,
+		Requests:     a.Requests,
 		CurlCommand:  a.CurlCommand,
 		CurlFile:     a.CurlFile,
 		LoadStrategy: a.LoadStrategy,

@@ -43,6 +43,7 @@ func (bt *BatchTest) ToConfig(defaults *Config) (*Config, error) {
 		Verbose:      defaults.Verbose,
 		UseNetHTTP:   defaults.UseNetHTTP,
 		PrintLatency: defaults.PrintLatency,
+		Requests:     defaults.Requests,
 	}
 
 	// Override with batch test specific values

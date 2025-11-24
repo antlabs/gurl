@@ -62,15 +62,11 @@ func (r *Reporter) GenerateReport(result *BatchResult) string {
 				report.WriteString(fmt.Sprintf("   Avg Latency: %v\n", test.Stats.GetAverageLatency()))
 				if statsErrorCount > 0 {
 					report.WriteString(fmt.Sprintf("   Errors: %d\n", statsErrorCount))
-					// Print a few sample errors (typically assertion failures) in a
-					// compact, readable block.
-					report.WriteString("   Assertion Errors:\n")
-					const maxSampleErrors = 5
-					for idx, err := range test.Stats.GetErrors() {
-						if idx >= maxSampleErrors {
-							break
-						}
-						report.WriteString(fmt.Sprintf("     - #%d: %v\n", idx+1, err))
+					report.WriteString("   Error Groups:\n")
+					groups := r.groupErrors(test.Stats.GetErrors())
+					for key, g := range groups {
+						report.WriteString(fmt.Sprintf("     - [%s] count=%d\n", key, g.count))
+						report.WriteString(fmt.Sprintf("       first: %s\n", g.first))
 					}
 				}
 			}
@@ -161,6 +157,31 @@ func (r *Reporter) GenerateReport(result *BatchResult) string {
 	}
 
 	return report.String()
+}
+
+type errorGroup struct {
+	count int
+	first string
+}
+
+func (r *Reporter) groupErrors(errs []error) map[string]errorGroup {
+	groups := make(map[string]errorGroup)
+	for _, err := range errs {
+		if err == nil {
+			continue
+		}
+		msg := err.Error()
+		// For now, group strictly by full error message. This keeps implementation
+		// simple and still provides useful aggregation for repeated assertion
+		// failures or response errors.
+		g := groups[msg]
+		if g.count == 0 {
+			g.first = msg
+		}
+		g.count++
+		groups[msg] = g
+	}
+	return groups
 }
 
 // GenerateCSVReport generates a CSV format report

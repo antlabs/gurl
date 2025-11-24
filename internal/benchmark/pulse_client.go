@@ -84,6 +84,8 @@ type HTTPClientHandler struct {
 	maxBodySize  int64
 	rateLimiter  ratelimit.Limiter
 	asserts      string
+	maxRequests  int64
+	cancel       context.CancelFunc
 }
 
 // NewPulseBenchmark 创建新的pulse基准测试实例
@@ -114,6 +116,28 @@ func (h *HTTPClientHandler) OnOpen(c *pulse.Conn) {
 	session.parser.SetUserData(session.parseResult)
 
 	c.SetSession(session)
+
+	// 在发送第一个请求前，根据 MaxRequests 使用 CAS 占用一个请求名额
+	if h.maxRequests > 0 {
+		for {
+			cur := atomic.LoadInt64(h.requestCount)
+			if cur >= h.maxRequests {
+				// 已达到上限，取消测试并关闭连接
+				if h.cancel != nil {
+					h.cancel()
+				}
+				c.Close()
+				return
+			}
+			if atomic.CompareAndSwapInt64(h.requestCount, cur, cur+1) {
+				// 如果这是最后一个名额，占用后立即取消上下文
+				if cur+1 >= h.maxRequests && h.cancel != nil {
+					h.cancel()
+				}
+				break
+			}
+		}
+	}
 
 	// 如果配置了频率限制，在发送第一个请求前获取令牌
 	if h.rateLimiter != nil {
@@ -152,7 +176,11 @@ func (h *HTTPClientHandler) OnData(c *pulse.Conn, data []byte) {
 	// 检查是否收到完整的HTTP响应
 	if session.parseResult.messageComplete {
 		duration := time.Since(session.startTime)
-		atomic.AddInt64(h.requestCount, 1)
+
+		// 如果没有配置 maxRequests（=0），在每次完成响应时递增请求计数
+		if h.maxRequests == 0 {
+			atomic.AddInt64(h.requestCount, 1)
+		}
 
 		// 记录统计数据
 		session.results.AddLatency(duration)
@@ -178,6 +206,28 @@ func (h *HTTPClientHandler) OnData(c *pulse.Conn, data []byte) {
 		session.parseResult.Reset()
 		session.parser.SetUserData(session.parseResult)
 		session.startTime = time.Now()
+
+		// 在发送下一个请求前，根据 MaxRequests 使用 CAS 占用一个请求名额
+		if h.maxRequests > 0 {
+			for {
+				cur := atomic.LoadInt64(h.requestCount)
+				if cur >= h.maxRequests {
+					// 已达到上限，取消测试并关闭连接
+					if h.cancel != nil {
+						h.cancel()
+					}
+					c.Close()
+					return
+				}
+				if atomic.CompareAndSwapInt64(h.requestCount, cur, cur+1) {
+					// 如果这是最后一个名额，占用后立即取消上下文
+					if cur+1 >= h.maxRequests && h.cancel != nil {
+						h.cancel()
+					}
+					break
+				}
+			}
+		}
 
 		// 在发送下一个请求前应用频率限制（如果配置了Rate）
 		if h.rateLimiter != nil {
@@ -369,6 +419,8 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 			maxBodySize:  1 << 20, // 1MB限制
 			rateLimiter:  limiter,
 			asserts:      pb.config.Asserts,
+			maxRequests:  pb.config.Requests,
+			cancel:       cancel,
 		}),
 	)
 

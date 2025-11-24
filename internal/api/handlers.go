@@ -23,6 +23,7 @@ type BenchmarkRequest struct {
 	Duration    string                 `json:"duration,omitempty"`
 	Threads     int                    `json:"threads,omitempty"`
 	Rate        int                    `json:"rate,omitempty"`
+	Requests    int64                  `json:"requests,omitempty"`
 	Timeout     string                 `json:"timeout,omitempty"`
 	Method      string                 `json:"method,omitempty"`
 	Headers     map[string]string      `json:"headers,omitempty"`
@@ -172,6 +173,7 @@ func (s *Server) handleBenchmark(w http.ResponseWriter, r *http.Request) {
 		Duration:    duration,
 		Threads:     req.Threads,
 		Rate:        req.Rate,
+		Requests:    req.Requests,
 		Timeout:     timeout,
 		CurlCommand: req.Curl,
 		Method:      req.Method,
@@ -229,6 +231,7 @@ func (s *Server) handleBenchmark(w http.ResponseWriter, r *http.Request) {
 		"duration":    req.Duration,
 		"threads":     req.Threads,
 		"rate":        req.Rate,
+		"requests":    req.Requests,
 		"timeout":     req.Timeout,
 		"method":      req.Method,
 		"headers":     req.Headers,

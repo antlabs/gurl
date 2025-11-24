@@ -28,6 +28,7 @@ func (s *Server) handleBenchmark(ctx context.Context, req mcp.CallToolRequest) (
 	durationStr := mcp.ParseString(req, "duration", "10s")
 	threads := mcp.ParseInt(req, "threads", 2)
 	rate := mcp.ParseInt(req, "rate", 0)
+	requests := mcp.ParseInt(req, "requests", 0)
 	timeoutStr := mcp.ParseString(req, "timeout", "30s")
 	curlCommand := mcp.ParseString(req, "curl", "")
 	targetURL := mcp.ParseString(req, "url", "")
@@ -58,6 +59,7 @@ func (s *Server) handleBenchmark(ctx context.Context, req mcp.CallToolRequest) (
 		Duration:     duration,
 		Threads:      threads,
 		Rate:         rate,
+		Requests:     int64(requests),
 		Timeout:      timeout,
 		CurlCommand:  curlCommand,
 		Method:       method,
