@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764088327075,
+  "lastUpdate": 1764089181055,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -1440,6 +1440,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "14308395 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "c629e99897d430933065853a601399377183907e",
+          "message": "docs: remove outdated development plan document\n\n- Deleted DEVELOPMENT_PLAN.md containing obsolete roadmap and feature plans\n- Removed documentation for completed features (batch testing, URL templates, interface-level TPS stats, Web UI)\n- Cleaned up outdated technical debt, timeline, and release planning sections",
+          "timestamp": "2025-11-26T00:45:40+08:00",
+          "tree_id": "fdf7e683b8a55d6ddf8840fd16491617479815ca",
+          "url": "https://github.com/antlabs/gurl/commit/c629e99897d430933065853a601399377183907e"
+        },
+        "date": 1764089180759,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100060114,
+            "unit": "ns/op\t 5172271 B/op\t   63795 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100060114,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 5172271,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 63795,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 405.3,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "15032593 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 405.3,
+            "unit": "ns/op",
+            "extra": "15032593 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "15032593 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "15032593 times\n4 procs"
           }
         ]
       }
