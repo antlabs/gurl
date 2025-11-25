@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764001131572,
+  "lastUpdate": 1764088327075,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -1368,6 +1368,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "14704760 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "53731b9f34246be1a301293d5479c2efb1eff7d4",
+          "message": "feat: add multi-request support to pulse client and improve write traffic tracking\n\n- Added PulseBenchmarkMulti struct to support multiple requests in pulse client\n- Implemented NewPulseBenchmarkWithMultipleRequests to create pulse benchmark with request pool\n- Modified HTTPClientHandler to support both single and multi-request modes via requestPool field\n- Added write traffic tracking with AddWriteBytes calls after each request write operation\n- Enhanced output to display write traffic statistics (",
+          "timestamp": "2025-11-26T00:30:23+08:00",
+          "tree_id": "e80dcd0f58e54e7cd01defeacca664c5ce9b9292",
+          "url": "https://github.com/antlabs/gurl/commit/53731b9f34246be1a301293d5479c2efb1eff7d4"
+        },
+        "date": 1764088326257,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100068863,
+            "unit": "ns/op\t 7957087 B/op\t   98226 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100068863,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 7957087,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 98226,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 419.8,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "14308395 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 419.8,
+            "unit": "ns/op",
+            "extra": "14308395 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "14308395 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "14308395 times\n4 procs"
           }
         ]
       }
