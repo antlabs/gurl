@@ -29,6 +29,7 @@ type BatchTest struct {
 	Verbose     bool   `yaml:"verbose,omitempty" json:"verbose,omitempty"`
 	UseNetHTTP  bool   `yaml:"use_nethttp,omitempty" json:"use_nethttp,omitempty"`
 	Asserts     string `yaml:"asserts,omitempty" json:"asserts,omitempty"`
+	Requests    int64  `yaml:"requests,omitempty" json:"requests,omitempty"`
 }
 
 // ToConfig converts BatchTest to Config with defaults
@@ -46,6 +47,9 @@ func (bt *BatchTest) ToConfig(defaults *Config) (*Config, error) {
 		Requests:     defaults.Requests,
 	}
 
+	if bt.Requests > 0 {
+		cfg.Requests = bt.Requests
+	}
 	// Override with batch test specific values
 	if bt.Connections > 0 {
 		cfg.Connections = bt.Connections

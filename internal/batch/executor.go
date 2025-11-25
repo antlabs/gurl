@@ -3,6 +3,7 @@ package batch
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"sync"
 	"time"
@@ -156,20 +157,18 @@ func (e *Executor) executeTest(ctx context.Context, batchTest *config.BatchTest,
 			}
 		}
 		if req.Body != nil {
-			body := make([]byte, 0)
-			buf := make([]byte, 1024)
-			for {
-				n, err := req.Body.Read(buf)
-				if n > 0 {
-					body = append(body, buf[:n]...)
-				}
-				if err != nil {
-					break
-				}
+			body, err := io.ReadAll(req.Body)
+			if err != nil {
+				result.Error = fmt.Errorf("failed to read request body: %v", err)
+				result.EndTime = time.Now()
+				result.Duration = result.EndTime.Sub(result.StartTime)
+				return result
 			}
 			cfg.Body = string(body)
 		}
 	} else {
+		// TODO raw http request
+		// TODO:
 		// Create a basic request if no curl command provided
 		var err error
 		req, err = http.NewRequest(cfg.Method, "http://example.com", nil)

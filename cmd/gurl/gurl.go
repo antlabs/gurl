@@ -512,7 +512,7 @@ func main() {
 			os.Exit(1)
 		}
 	} else {
-		// 单个测试模式
+		// 执行基准测试模式
 		if err := runBenchmark(args); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)

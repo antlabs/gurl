@@ -34,4 +34,4 @@ go.work.sum
 /build
 # Editor/IDE
 # .idea/
-# .vscode/
+.vscode/

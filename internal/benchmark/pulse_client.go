@@ -24,11 +24,19 @@ import (
 
 var bytesContentLength = []byte("Content-Length")
 
-// PulseBenchmark 使用pulse库进行HTTP压测的实现
+// PulseBenchmark 使用 pulse 库进行单请求 HTTP 压测的实现
 type PulseBenchmark struct {
 	config  config.Config
 	request *http.Request
 	target  *url.URL
+}
+
+// PulseBenchmarkMulti 使用 pulse 库进行多请求 HTTP 压测的实现
+// 多请求列表通过 RequestPool 管理，按照配置的负载策略分发
+type PulseBenchmarkMulti struct {
+	config      config.Config
+	requestPool *RequestPool
+	target      *url.URL
 }
 
 // HTTPParseResult 存储HTTP解析结果
@@ -77,7 +85,8 @@ type ConnSession struct {
 
 // HTTPClientHandler 处理HTTP客户端连接的回调
 type HTTPClientHandler struct {
-	request      *http.Request
+	request      *http.Request // 单请求模式使用
+	requestPool  *RequestPool  // 多请求模式使用
 	requestCount *int64
 	errorCount   *int64
 	results      *stats.Results
@@ -94,6 +103,21 @@ func NewPulseBenchmark(cfg config.Config, req *http.Request) *PulseBenchmark {
 		config:  cfg,
 		request: req,
 		target:  req.URL,
+	}
+}
+
+// NewPulseBenchmarkWithMultipleRequests 创建支持多请求的 pulse 基准测试实例
+// 目前假定所有请求指向同一主机，仅使用第一个请求的 URL 建立底层 TCP 连接
+func NewPulseBenchmarkWithMultipleRequests(cfg config.Config, requests []*http.Request) *PulseBenchmarkMulti {
+	if len(requests) == 0 {
+		return nil
+	}
+
+	pool := NewRequestPool(requests, cfg.LoadStrategy)
+	return &PulseBenchmarkMulti{
+		config:      cfg,
+		requestPool: pool,
+		target:      requests[0].URL,
 	}
 }
 
@@ -144,17 +168,19 @@ func (h *HTTPClientHandler) OnOpen(c *pulse.Conn) {
 		h.rateLimiter.Take()
 	}
 
-	// 构建HTTP请求
+	// 构建HTTP请求（单请求或多请求）
 	httpReq := h.buildHTTPRequest()
 
 	// 发送HTTP请求
-	_, err := c.Write(httpReq)
+	written, err := c.Write(httpReq)
 	if err != nil {
 		atomic.AddInt64(h.errorCount, 1)
 		h.results.AddError(err)
 		c.Close()
 		return
 	}
+
+	h.results.AddWriteBytes(int64(written))
 }
 
 // OnData 接收到数据时的回调
@@ -236,13 +262,16 @@ func (h *HTTPClientHandler) OnData(c *pulse.Conn, data []byte) {
 
 		// 立即发送下一个请求（持续压测）
 		httpReq := h.buildHTTPRequest()
-		_, writeErr := c.Write(httpReq)
+		written, writeErr := c.Write(httpReq)
 		if writeErr != nil {
 			atomic.AddInt64(h.errorCount, 1)
 			session.results.AddError(writeErr)
 			c.Close()
 			return
 		}
+
+		// 记录写入字节数（请求体+头部），优先使用 ContentLength
+		session.results.AddWriteBytes(int64(written))
 	}
 }
 
@@ -264,7 +293,18 @@ func (h *HTTPClientHandler) OnClose(c *pulse.Conn, err error) {
 
 // buildHTTPRequest 构建HTTP请求字符串
 func (h *HTTPClientHandler) buildHTTPRequest() []byte {
-	b, err := httputil.DumpRequest(h.request, true)
+	var req *http.Request
+	if h.requestPool != nil {
+		// 多请求模式：从请求池中获取下一个请求
+		var size int
+		req, size = h.requestPool.GetRequest()
+		_ = size // 目前仅用于选择请求，写入字节数使用实际 written 统计
+	} else {
+		// 单请求模式
+		req = h.request
+	}
+
+	b, err := httputil.DumpRequest(req, true)
 	if err != nil {
 		return nil
 	}
@@ -405,7 +445,7 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 		}
 	}
 
-	// 创建pulse客户端事件循环
+	// 创建 pulse 客户端事件循环
 	loop := pulse.NewClientEventLoop(
 		testCtx,
 		pulse.WithTaskType(pulse.TaskTypeInEventLoop), // 在事件循环中处理任务
@@ -413,6 +453,7 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 		pulse.WithLogLevel(slog.LevelError), // 只显示错误日志，避免INFO日志干扰UI显示
 		pulse.WithCallback(&HTTPClientHandler{
 			request:      pb.request,
+			requestPool:  nil,
 			requestCount: &requestCount,
 			errorCount:   &errorCount,
 			results:      results,
@@ -453,6 +494,105 @@ func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 
 		err = loop.RegisterConn(conn)
 		if err != nil {
+			return nil, fmt.Errorf("failed to register connection: %w", err)
+		}
+	}
+
+	// 等待测试时间结束
+	<-testCtx.Done()
+
+	// 等待采样完成
+	<-samplingDone
+
+	// 计算最终结果
+	results.TotalRequests = atomic.LoadInt64(&requestCount)
+	results.TotalErrors = atomic.LoadInt64(&errorCount)
+	// 使用实际运行时间，而不是配置的时间（支持提前中断）
+	results.Duration = time.Since(startTime)
+
+	return results, nil
+}
+
+// Run 执行 pulse 多请求基准测试
+func (pb *PulseBenchmarkMulti) Run(ctx context.Context) (*stats.Results, error) {
+	results := stats.NewResults()
+
+	startTime := time.Now()
+
+	// 创建测试上下文
+	testCtx, cancel := context.WithTimeout(ctx, pb.config.Duration)
+	defer cancel()
+
+	var requestCount int64
+	var errorCount int64
+
+	// 创建 Uber 限流器（所有连接共享，与 NetHTTPBenchmark 行为一致）
+	var limiter ratelimit.Limiter
+	if pb.config.Rate > 0 {
+		limiter = ratelimit.New(pb.config.Rate)
+	}
+
+	// 创建 Live UI（如果启用）
+	var liveUI *LiveUI
+	var uiErr error
+	if pb.config.LiveUI {
+		liveUI, uiErr = NewLiveUIWithTheme(pb.config.Duration, pb.config.UITheme)
+		if uiErr != nil {
+			// 如果 UI 初始化失败，继续运行但不显示 UI
+			pb.config.LiveUI = false
+		} else {
+			defer liveUI.Close()
+		}
+	}
+
+	// 创建 pulse 客户端事件循环
+	loop := pulse.NewClientEventLoop(
+		testCtx,
+		pulse.WithTaskType(pulse.TaskTypeInEventLoop), // 在事件循环中处理任务
+		pulse.WithTriggerType(core.TriggerTypeLevel),
+		pulse.WithLogLevel(slog.LevelError), // 只显示错误日志，避免 INFO 日志干扰 UI 显示
+		pulse.WithCallback(&HTTPClientHandler{
+			request:      nil,
+			requestPool:  pb.requestPool,
+			requestCount: &requestCount,
+			errorCount:   &errorCount,
+			results:      results,
+			maxBodySize:  1 << 20, // 1MB 限制
+			rateLimiter:  limiter,
+			asserts:      pb.config.Asserts,
+			maxRequests:  pb.config.Requests,
+			cancel:       cancel,
+		}),
+	)
+
+	// 启动事件循环
+	go func() {
+		loop.Serve()
+	}()
+
+	// 建立连接
+	port := pb.target.Port()
+	if port == "" {
+		if pb.target.Scheme == "https" {
+			port = "443"
+		} else {
+			port = "80"
+		}
+	}
+
+	address := net.JoinHostPort(pb.target.Hostname(), port)
+
+	// 启动采样 goroutine，每秒记录请求数和更新 UI（在连接建立之前启动）
+	samplingDone := StartSampling(testCtx, cancel, &requestCount, &errorCount, results, liveUI, nil, startTime)
+
+	// 创建多个连接（不输出日志，避免破坏 UI）
+	for i := 0; i < pb.config.Connections; i++ {
+		conn, err := net.Dial("tcp", address)
+		if err != nil {
+			return nil, fmt.Errorf("failed to connect to %s: %w", address, err)
+		}
+
+		if err := loop.RegisterConn(conn); err != nil {
 			return nil, fmt.Errorf("failed to register connection: %w", err)
 		}
 	}

@@ -34,8 +34,22 @@ func New(cfg config.Config, req *http.Request) *Benchmark {
 
 // NewWithMultipleRequests 创建支持多请求的基准测试实例
 func NewWithMultipleRequests(cfg config.Config, requests []*http.Request) *Benchmark {
-	// 多请求模式目前只支持 NetHTTP
-	runner := NewNetHTTPBenchmarkWithMultipleRequests(cfg, requests)
+	if len(requests) == 0 {
+		return &Benchmark{runner: nil}
+	}
+
+	var runner Runner
+
+	// 如果用户强制使用标准库，则使用 NetHTTP 实现
+	if cfg.UseNetHTTP {
+		runner = NewNetHTTPBenchmarkWithMultipleRequests(cfg, requests)
+	} else if ShouldUsePulse(requests[0]) {
+		// 根据第一个请求的 URL/特性选择 pulse 多请求实现
+		runner = NewPulseBenchmarkWithMultipleRequests(cfg, requests)
+	} else {
+		// 默认回退到 NetHTTP 多请求实现
+		runner = NewNetHTTPBenchmarkWithMultipleRequests(cfg, requests)
+	}
 
 	return &Benchmark{
 		runner: runner,

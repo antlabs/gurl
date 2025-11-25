@@ -51,7 +51,7 @@ func PrintResults(results *stats.Results, cfg config.Config) {
 		}
 	}
 
-	// 打印总体统计
+	// 打印总体统计（读流量）
 	fmt.Printf("  %d requests in %s, %s read\n",
 		results.TotalRequests,
 		results.Duration,
@@ -76,7 +76,14 @@ func PrintResults(results *stats.Results, cfg config.Config) {
 	}
 
 	fmt.Printf("Requests/sec: %8.2f\n", qps)
-	fmt.Printf("Transfer/sec: %8s\n", formatBytes(int64(float64(results.GetTotalBytes())/results.Duration.Seconds())))
+	fmt.Printf("Transfer/sec: %8s read\n", formatBytes(int64(float64(results.GetTotalBytes())/results.Duration.Seconds())))
+
+	// 写流量统计（基于请求体大小）
+	if results.GetTotalWriteBytes() > 0 && results.Duration.Seconds() > 0 {
+		writeTotal := formatBytes(results.GetTotalWriteBytes())
+		writePerSec := formatBytes(int64(float64(results.GetTotalWriteBytes()) / results.Duration.Seconds()))
+		fmt.Printf("Write:        %s total, %s/sec\n", writeTotal, writePerSec)
+	}
 
 	// 打印每个端点的统计（如果有多个端点）
 	endpointStats := results.GetEndpointStats()
@@ -141,6 +148,13 @@ func printEndpointStats(stats *stats.EndpointStats, duration time.Duration) {
 		fmt.Printf("  Data:         %s total, %s/sec\n",
 			formatBytes(stats.TotalBytes),
 			formatBytes(int64(float64(stats.TotalBytes)/duration.Seconds())))
+	}
+
+	// 写入数据（请求体）
+	if stats.WriteBytes > 0 && duration.Seconds() > 0 {
+		fmt.Printf("  Write:        %s total, %s/sec\n",
+			formatBytes(stats.WriteBytes),
+			formatBytes(int64(float64(stats.WriteBytes)/duration.Seconds())))
 	}
 }
 

@@ -66,7 +66,6 @@ func (r *Reporter) GenerateReport(result *BatchResult) string {
 					groups := r.groupErrors(test.Stats.GetErrors())
 					for key, g := range groups {
 						report.WriteString(fmt.Sprintf("     - [%s] count=%d\n", key, g.count))
-						report.WriteString(fmt.Sprintf("       first: %s\n", g.first))
 					}
 				}
 			}

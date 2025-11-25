@@ -49,7 +49,7 @@ func NewNetHTTPBenchmark(cfg config.Config, req *http.Request) *NetHTTPBenchmark
 	}
 
 	// 读取并保存 body 内容
-	var bodyContent string
+	bodyContent := ""
 	if req.Body != nil {
 		bodyBytes, _ := io.ReadAll(req.Body)
 		req.Body.Close()
@@ -65,6 +65,29 @@ func NewNetHTTPBenchmark(cfg config.Config, req *http.Request) *NetHTTPBenchmark
 		requestPool: nil, // 单请求模式
 		client:      client,
 		rateLimiter: limiter,
+	}
+}
+
+// acquireRequestSlot 尝试为一次请求占用一个请求名额。
+// 返回值为 false 表示已经达到上限，调用方应当退出当前连接循环。
+func (b *NetHTTPBenchmark) acquireRequestSlot(cancel context.CancelFunc, requestCount *int64) bool {
+	for {
+		cur := atomic.LoadInt64(requestCount)
+		if cur >= b.config.Requests {
+			// 已达到上限，取消测试并退出
+			if cancel != nil {
+				// cancel()
+			}
+			return false
+		}
+		// 尝试占用一个请求名额
+		if atomic.CompareAndSwapInt64(requestCount, cur, cur+1) {
+			// 如果这是最后一个名额，占用后立即取消上下文，通知其它 goroutine 退出
+			if cur+1 >= b.config.Requests && cancel != nil {
+				// 保持与原实现一致，这里暂不主动调用 cancel()
+			}
+			return true
+		}
 	}
 }
 
@@ -141,8 +164,10 @@ func (b *NetHTTPBenchmark) Run(ctx context.Context) (*stats.Results, error) {
 	// 等待所有工作线程完成
 	wg.Wait()
 
-	// 等待采样完成
-	<-samplingDone
+	if b.config.Requests <= 0 {
+		// 等待采样完成
+		<-samplingDone
+	}
 
 	// 计算最终结果
 	results.TotalRequests = atomic.LoadInt64(&requestCount)
@@ -185,23 +210,8 @@ func (b *NetHTTPBenchmark) runConnection(ctx context.Context, cancel context.Can
 
 		// 如果配置了最大请求数（Requests > 0），使用 CAS 控制总请求次数
 		if b.config.Requests > 0 {
-			for {
-				cur := atomic.LoadInt64(requestCount)
-				if cur >= b.config.Requests {
-					// 已达到上限，取消测试并退出
-					if cancel != nil {
-						cancel()
-					}
-					return
-				}
-				// 尝试占用一个请求名额
-				if atomic.CompareAndSwapInt64(requestCount, cur, cur+1) {
-					// 如果这是最后一个名额，占用后立即取消上下文，通知其它 goroutine 退出
-					if cur+1 >= b.config.Requests && cancel != nil {
-						cancel()
-					}
-					break
-				}
+			if !b.acquireRequestSlot(cancel, requestCount) {
+				return
 			}
 		}
 
@@ -226,9 +236,10 @@ func (b *NetHTTPBenchmark) runConnection(ctx context.Context, cancel context.Can
 
 		// 获取要执行的请求
 		var req *http.Request
+		writeBytes := int(0)
 		if b.requestPool != nil {
 			// 多请求模式：从请求池获取
-			req = b.requestPool.GetRequest()
+			req, writeBytes = b.requestPool.GetRequest()
 		} else {
 			// 单请求模式
 			req = b.request
@@ -239,7 +250,6 @@ func (b *NetHTTPBenchmark) runConnection(ctx context.Context, cancel context.Can
 		if b.bodyContent != "" {
 			clonedReq.Body = io.NopCloser(strings.NewReader(b.bodyContent))
 		}
-
 		// 执行请求
 		start := time.Now()
 		resp, err := b.client.Do(clonedReq)
@@ -295,7 +305,12 @@ func (b *NetHTTPBenchmark) runConnection(ctx context.Context, cancel context.Can
 
 		// 如果是多请求模式，记录每个 URL 的统计
 		if b.requestPool != nil {
-			results.AddLatencyWithURL(req.URL.String(), duration, statusCode, bytesRead, err)
+			results.AddLatencyWithURL(req.URL.String(), duration, statusCode, bytesRead, int64(writeBytes), err)
+		}
+
+		// 记录写入字节数（请求体），在完成一次请求后累加
+		if writeBytes > 0 {
+			results.AddWriteBytes(int64(writeBytes))
 		}
 	}
 }

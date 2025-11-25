@@ -15,20 +15,22 @@ type EndpointStats struct {
 	Latencies   []time.Duration
 	StatusCodes map[int]int64
 	TotalBytes  int64
+	WriteBytes  int64
 	MinLatency  time.Duration
 	MaxLatency  time.Duration
 }
 
 // Results holds benchmark results
 type Results struct {
-	mu           sync.RWMutex
-	latencies    []time.Duration
-	statusCodes  map[int]int64
-	errors       []error
-	totalBytes   int64
-	reqPerSecond []int64       // 每秒的请求数统计
-	minLatency   time.Duration // 最快响应时间
-	maxLatency   time.Duration // 最慢响应时间
+	mu              sync.RWMutex
+	latencies       []time.Duration
+	statusCodes     map[int]int64
+	errors          []error
+	totalBytes      int64
+	totalWriteBytes int64
+	reqPerSecond    []int64       // 每秒的请求数统计
+	minLatency      time.Duration // 最快响应时间
+	maxLatency      time.Duration // 最慢响应时间
 
 	// 按 URL 分组的统计
 	endpointStats map[string]*EndpointStats
@@ -65,7 +67,7 @@ func (r *Results) AddLatency(latency time.Duration) {
 }
 
 // AddLatencyWithURL adds a latency measurement for a specific URL
-func (r *Results) AddLatencyWithURL(url string, latency time.Duration, statusCode int, bytes int64, err error) {
+func (r *Results) AddLatencyWithURL(url string, latency time.Duration, statusCode int, bytes int64, writeBytes int64, err error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -91,6 +93,7 @@ func (r *Results) AddLatencyWithURL(url string, latency time.Duration, statusCod
 	stats.Requests++
 	stats.Latencies = append(stats.Latencies, latency)
 	stats.TotalBytes += bytes
+	stats.WriteBytes += writeBytes
 
 	if err != nil {
 		stats.Errors++
@@ -125,6 +128,13 @@ func (r *Results) AddBytes(bytes int64) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.totalBytes += bytes
+}
+
+// AddWriteBytes adds to the total bytes written (request bodies)
+func (r *Results) AddWriteBytes(bytes int64) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.totalWriteBytes += bytes
 }
 
 // GetLatencies returns a copy of all latencies
@@ -164,6 +174,13 @@ func (r *Results) GetTotalBytes() int64 {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.totalBytes
+}
+
+// GetTotalWriteBytes returns the total bytes written (request bodies)
+func (r *Results) GetTotalWriteBytes() int64 {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.totalWriteBytes
 }
 
 // GetAverageLatency calculates the average latency
@@ -371,6 +388,7 @@ func (r *Results) GetEndpointStats() map[string]*EndpointStats {
 			Latencies:   append([]time.Duration{}, stats.Latencies...),
 			StatusCodes: make(map[int]int64),
 			TotalBytes:  stats.TotalBytes,
+			WriteBytes:  stats.WriteBytes,
 			MinLatency:  stats.MinLatency,
 			MaxLatency:  stats.MaxLatency,
 		}
