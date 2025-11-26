@@ -14,7 +14,7 @@ type EndpointStats struct {
 	Errors      int64
 	Latencies   []time.Duration
 	StatusCodes map[int]int64
-	TotalBytes  int64
+	ReadBytes   int64
 	WriteBytes  int64
 	MinLatency  time.Duration
 	MaxLatency  time.Duration
@@ -26,7 +26,7 @@ type Results struct {
 	latencies       []time.Duration
 	statusCodes     map[int]int64
 	errors          []error
-	totalBytes      int64
+	totalReadBytes  int64
 	totalWriteBytes int64
 	reqPerSecond    []int64       // 每秒的请求数统计
 	minLatency      time.Duration // 最快响应时间
@@ -92,7 +92,7 @@ func (r *Results) AddLatencyWithURL(url string, latency time.Duration, statusCod
 	stats := r.endpointStats[url]
 	stats.Requests++
 	stats.Latencies = append(stats.Latencies, latency)
-	stats.TotalBytes += bytes
+	stats.ReadBytes += bytes
 	stats.WriteBytes += writeBytes
 
 	if err != nil {
@@ -127,7 +127,7 @@ func (r *Results) AddError(err error) {
 func (r *Results) AddBytes(bytes int64) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.totalBytes += bytes
+	r.totalReadBytes += bytes
 }
 
 // AddWriteBytes adds to the total bytes written (request bodies)
@@ -173,7 +173,7 @@ func (r *Results) GetErrors() []error {
 func (r *Results) GetTotalBytes() int64 {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	return r.totalBytes
+	return r.totalReadBytes
 }
 
 // GetTotalWriteBytes returns the total bytes written (request bodies)
@@ -387,7 +387,7 @@ func (r *Results) GetEndpointStats() map[string]*EndpointStats {
 			Errors:      stats.Errors,
 			Latencies:   append([]time.Duration{}, stats.Latencies...),
 			StatusCodes: make(map[int]int64),
-			TotalBytes:  stats.TotalBytes,
+			ReadBytes:   stats.ReadBytes,
 			WriteBytes:  stats.WriteBytes,
 			MinLatency:  stats.MinLatency,
 			MaxLatency:  stats.MaxLatency,

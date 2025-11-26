@@ -433,7 +433,7 @@ func convertResultsToJSON(results *stats.Results) *BenchmarkResultsJSON {
 			"min_latency":      formatDuration(epStats.MinLatency),
 			"max_latency":      formatDuration(epStats.MaxLatency),
 			"status_codes":     epStats.StatusCodes,
-			"total_bytes":      epStats.TotalBytes,
+			"total_bytes":      epStats.ReadBytes,
 		}
 	}
 

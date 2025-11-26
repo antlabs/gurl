@@ -41,6 +41,18 @@ func PrintResults(results *stats.Results, cfg config.Config) {
 		fmt.Printf("    Req/Sec   %8.2f %8s %8s %8s\n", qps, "N/A", "N/A", "N/A")
 	}
 
+	// 打印延迟百分位
+	latencyPercentiles := results.GetLatencyPercentiles()
+	if len(latencyPercentiles) > 0 {
+		fmt.Printf("  Latency Percentiles\n")
+		orderedPs := []float64{50, 75, 90, 95, 99}
+		for _, p := range orderedPs {
+			if v, ok := latencyPercentiles[p]; ok {
+				fmt.Printf("    p%-2.0f      %s\n", p, formatDuration(v))
+			}
+		}
+	}
+
 	// 打印延迟分布
 	if cfg.PrintLatency && len(latencies) > 0 {
 		fmt.Printf("  Latency Distribution\n")
@@ -144,10 +156,10 @@ func printEndpointStats(stats *stats.EndpointStats, duration time.Duration) {
 	}
 
 	// 数据传输
-	if stats.TotalBytes > 0 {
-		fmt.Printf("  Data:         %s total, %s/sec\n",
-			formatBytes(stats.TotalBytes),
-			formatBytes(int64(float64(stats.TotalBytes)/duration.Seconds())))
+	if stats.ReadBytes > 0 {
+		fmt.Printf("  Read:         %s total, %s/sec\n",
+			formatBytes(stats.ReadBytes),
+			formatBytes(int64(float64(stats.ReadBytes)/duration.Seconds())))
 	}
 
 	// 写入数据（请求体）
