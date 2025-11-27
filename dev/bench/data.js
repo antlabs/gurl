@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764256311993,
+  "lastUpdate": 1764259655095,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -1584,6 +1584,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "14219050 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "5cd9fb67194cef8d0b852824d0bdc53b9b0c03ed",
+          "message": "feat: add scheduled execution support with --schedule-cron flag for all run modes\n\n- Added --schedule-cron flag to accept cron expressions for scheduled benchmark runs\n- Implemented runBenchmarkWithCron, runBatchTestWithCron, and runCompareWithCron functions\n- Added signal handling (SIGINT/SIGTERM) to gracefully stop scheduled runs\n- Integrated scheduler.ParseDailyCron to parse cron expressions and calculate next run times\n- Modified main function to check for ScheduleCron flag and route to appropriate schedule",
+          "timestamp": "2025-11-28T00:06:57+08:00",
+          "tree_id": "732c6a892eb70915ca6ec95df993a476e98bf07c",
+          "url": "https://github.com/antlabs/gurl/commit/5cd9fb67194cef8d0b852824d0bdc53b9b0c03ed"
+        },
+        "date": 1764259654245,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100073645,
+            "unit": "ns/op\t 5240975 B/op\t   64676 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100073645,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 5240975,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 64676,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 401.6,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "14924128 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 401.6,
+            "unit": "ns/op",
+            "extra": "14924128 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "14924128 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "14924128 times\n4 procs"
           }
         ]
       }
