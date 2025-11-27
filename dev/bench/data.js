@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764259805914,
+  "lastUpdate": 1764259809630,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -1800,6 +1800,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "14878586 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9cd39207e79843a27d7dc0f9eacdd3edd104f08f",
+          "message": "chore(deps): bump github.com/mark3labs/mcp-go from 0.43.0 to 0.43.1 (#11)\n\nBumps [github.com/mark3labs/mcp-go](https://github.com/mark3labs/mcp-go) from 0.43.0 to 0.43.1.\n- [Release notes](https://github.com/mark3labs/mcp-go/releases)\n- [Commits](https://github.com/mark3labs/mcp-go/compare/v0.43.0...v0.43.1)\n\n---\nupdated-dependencies:\n- dependency-name: github.com/mark3labs/mcp-go\n  dependency-version: 0.43.1\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2025-11-28T00:09:21+08:00",
+          "tree_id": "fcb68016c704dcef9db098f4e22a1011c416ff54",
+          "url": "https://github.com/antlabs/gurl/commit/9cd39207e79843a27d7dc0f9eacdd3edd104f08f"
+        },
+        "date": 1764259809315,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100125517,
+            "unit": "ns/op\t 5131590 B/op\t   63297 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100125517,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 5131590,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 63297,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 405.6,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "14865758 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 405.6,
+            "unit": "ns/op",
+            "extra": "14865758 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "14865758 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "14865758 times\n4 procs"
           }
         ]
       }
