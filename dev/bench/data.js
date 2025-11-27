@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764259655095,
+  "lastUpdate": 1764259760970,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -1656,6 +1656,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "14924128 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ae2ad57ec5edf4a39249d5202dbe5f2ad0c40353",
+          "message": "chore(deps): bump actions/checkout from 5 to 6 (#13)\n\nBumps [actions/checkout](https://github.com/actions/checkout) from 5 to 6.\n- [Release notes](https://github.com/actions/checkout/releases)\n- [Changelog](https://github.com/actions/checkout/blob/main/CHANGELOG.md)\n- [Commits](https://github.com/actions/checkout/compare/v5...v6)\n\n---\nupdated-dependencies:\n- dependency-name: actions/checkout\n  dependency-version: '6'\n  dependency-type: direct:production\n  update-type: version-update:semver-major\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2025-11-28T00:08:53+08:00",
+          "tree_id": "187665a1f5052de623ca4480e443a5cb94236b4b",
+          "url": "https://github.com/antlabs/gurl/commit/ae2ad57ec5edf4a39249d5202dbe5f2ad0c40353"
+        },
+        "date": 1764259760471,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100072232,
+            "unit": "ns/op\t 5181896 B/op\t   63891 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100072232,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 5181896,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 63891,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 406.5,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "14956460 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 406.5,
+            "unit": "ns/op",
+            "extra": "14956460 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "14956460 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "14956460 times\n4 procs"
           }
         ]
       }
