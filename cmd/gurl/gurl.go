@@ -20,6 +20,7 @@ import (
 	"github.com/antlabs/gurl/internal/mcp"
 	"github.com/antlabs/gurl/internal/mock"
 	"github.com/antlabs/gurl/internal/parser"
+	"github.com/antlabs/gurl/internal/scheduler"
 	"github.com/antlabs/gurl/internal/template"
 	"github.com/guonaihong/clop"
 )
@@ -83,6 +84,8 @@ type Args struct {
 	// Compare 选项（阶段1：使用 --compare-config/-f 与 --compare-name/-n）
 	CompareConfig string `clop:"--compare-config;-f" usage:"Path to compare configuration file (YAML/JSON)"`
 	CompareName   string `clop:"--compare-name" usage:"Name of compare scenario to run"`
+
+	ScheduleCron string `clop:"--schedule-cron" usage:"Cron expression for scheduled benchmark runs (sec min hour * * *)"`
 
 	// 位置参数
 	URL string `clop:"args=url" usage:"Target URL for benchmarking"`
@@ -238,6 +241,102 @@ func runBenchmark(args *Args) error {
 	benchmark.PrintResults(results, cfg)
 
 	return nil
+}
+
+func runBenchmarkWithCron(args *Args) error {
+	cronExpr, err := scheduler.ParseDailyCron(args.ScheduleCron)
+	if err != nil {
+		return err
+	}
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	defer signal.Stop(sigChan)
+
+	for {
+		now := time.Now()
+		next := cronExpr.NextAfter(now)
+		sleepDuration := next.Sub(now)
+		fmt.Printf("Next scheduled run at %s\n", next.Format(time.RFC3339))
+		timer := time.NewTimer(sleepDuration)
+		select {
+		case <-timer.C:
+			fmt.Printf("Starting scheduled run at %s\n", time.Now().Format(time.RFC3339))
+			if err := runBenchmark(args); err != nil {
+				fmt.Fprintf(os.Stderr, "Scheduled run error: %v\n", err)
+			}
+		case <-sigChan:
+			if !timer.Stop() {
+				<-timer.C
+			}
+			fmt.Println("\nReceived interrupt signal, stopping scheduled runs...")
+			return nil
+		}
+	}
+}
+
+func runBatchTestWithCron(args *Args) error {
+	cronExpr, err := scheduler.ParseDailyCron(args.ScheduleCron)
+	if err != nil {
+		return err
+	}
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	defer signal.Stop(sigChan)
+
+	for {
+		now := time.Now()
+		next := cronExpr.NextAfter(now)
+		sleepDuration := next.Sub(now)
+		fmt.Printf("Next scheduled batch run at %s\n", next.Format(time.RFC3339))
+		timer := time.NewTimer(sleepDuration)
+		select {
+		case <-timer.C:
+			fmt.Printf("Starting scheduled batch run at %s\n", time.Now().Format(time.RFC3339))
+			if err := runBatchTest(args); err != nil {
+				fmt.Fprintf(os.Stderr, "Scheduled batch run error: %v\n", err)
+			}
+		case <-sigChan:
+			if !timer.Stop() {
+				<-timer.C
+			}
+			fmt.Println("\nReceived interrupt signal, stopping scheduled batch runs...")
+			return nil
+		}
+	}
+}
+
+func runCompareWithCron(args *Args) error {
+	cronExpr, err := scheduler.ParseDailyCron(args.ScheduleCron)
+	if err != nil {
+		return err
+	}
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	defer signal.Stop(sigChan)
+
+	for {
+		now := time.Now()
+		next := cronExpr.NextAfter(now)
+		sleepDuration := next.Sub(now)
+		fmt.Printf("Next scheduled compare run at %s\n", next.Format(time.RFC3339))
+		timer := time.NewTimer(sleepDuration)
+		select {
+		case <-timer.C:
+			fmt.Printf("Starting scheduled compare run at %s\n", time.Now().Format(time.RFC3339))
+			if err := runCompare(args); err != nil {
+				fmt.Fprintf(os.Stderr, "Scheduled compare run error: %v\n", err)
+			}
+		case <-sigChan:
+			if !timer.Stop() {
+				<-timer.C
+			}
+			fmt.Println("\nReceived interrupt signal, stopping scheduled compare runs...")
+			return nil
+		}
+	}
 }
 
 // runCompare 执行 compare 模式（一对一场景）
@@ -498,24 +597,45 @@ func main() {
 
 	// 检查是否为 compare 模式（优先于批量/基准测试）
 	if args.CompareConfig != "" {
-		if err := runCompare(args); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			os.Exit(1)
+		if args.ScheduleCron != "" {
+			if err := runCompareWithCron(args); err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				os.Exit(1)
+			}
+		} else {
+			if err := runCompare(args); err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				os.Exit(1)
+			}
 		}
 		return
 	}
 
 	// 检查是否为批量测试模式
 	if args.BatchConfig != "" {
-		if err := runBatchTest(args); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			os.Exit(1)
+		if args.ScheduleCron != "" {
+			if err := runBatchTestWithCron(args); err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				os.Exit(1)
+			}
+		} else {
+			if err := runBatchTest(args); err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				os.Exit(1)
+			}
 		}
 	} else {
 		// 执行基准测试模式
-		if err := runBenchmark(args); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			os.Exit(1)
+		if args.ScheduleCron != "" {
+			if err := runBenchmarkWithCron(args); err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				os.Exit(1)
+			}
+		} else {
+			if err := runBenchmark(args); err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				os.Exit(1)
+			}
 		}
 	}
 }
