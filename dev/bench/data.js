@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764089181055,
+  "lastUpdate": 1764256311993,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -1512,6 +1512,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "15032593 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "1c7d0955b6a6804672274f4ab6b4efdea1f669d2",
+          "message": "refactor: rename TotalBytes to ReadBytes for clarity in traffic statistics\n\n- Renamed TotalBytes field to ReadBytes in EndpointStats struct to distinguish from WriteBytes\n- Updated totalBytes to totalReadBytes in Results struct for consistency\n- Changed output labels from \"Data:\" to \"Read:\" in endpoint statistics display\n- Added latency percentiles output (p50, p75, p90, p95, p99) in PrintResults\n- Modified API handler and all related functions to use ReadBytes instead of TotalBytes",
+          "timestamp": "2025-11-27T00:16:21+08:00",
+          "tree_id": "b1dfe9c992f3465756f433663a2d3dbff54f860e",
+          "url": "https://github.com/antlabs/gurl/commit/1c7d0955b6a6804672274f4ab6b4efdea1f669d2"
+        },
+        "date": 1764256311121,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100117052,
+            "unit": "ns/op\t 7361822 B/op\t   90820 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100117052,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 7361822,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 90820,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 422,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "14219050 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 422,
+            "unit": "ns/op",
+            "extra": "14219050 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "14219050 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "14219050 times\n4 procs"
           }
         ]
       }
