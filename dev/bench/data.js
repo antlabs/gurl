@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764406928014,
+  "lastUpdate": 1764407244404,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -2016,6 +2016,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "14768348 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "2429a54de6db1bd32c8a65e272243a6a885b9229",
+          "message": "feat: add batch test notification support with Feishu webhook integration\n\n- Added NotifierConfig struct to BatchConfig for configurable notification settings\n- Implemented unified batch notification after test completion to avoid per-assertion spam\n- Added notify package import and integration in runBatchTest function\n- Captured text report output for inclusion in notification messages\n- Added error handling for notification failures with verbose logging\n- Supports Feishu webhook notifications with",
+          "timestamp": "2025-11-29T17:06:28+08:00",
+          "tree_id": "32aec5854e4fae2537a1b99dc4fc51728c493d4f",
+          "url": "https://github.com/antlabs/gurl/commit/2429a54de6db1bd32c8a65e272243a6a885b9229"
+        },
+        "date": 1764407244147,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100073945,
+            "unit": "ns/op\t 5203660 B/op\t   64172 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100073945,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 5203660,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 64172,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 402.4,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "14886318 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 402.4,
+            "unit": "ns/op",
+            "extra": "14886318 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "14886318 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "14886318 times\n4 procs"
           }
         ]
       }
