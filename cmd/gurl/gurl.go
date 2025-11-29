@@ -80,6 +80,7 @@ type Args struct {
 	MockResponse   string `clop:"--mock-response" usage:"Custom response body"`
 	MockStatusCode int    `clop:"--mock-status" usage:"HTTP status code to return" default:"200"`
 	MockConfig     string `clop:"--mock-config" usage:"Path to mock server configuration file (YAML/JSON)"`
+	MockLog        bool   `clop:"--mock-log" usage:"Enable request logging for mock server"`
 
 	// Compare 选项（阶段1：使用 --compare-config/-f 与 --compare-name/-n）
 	CompareConfig string `clop:"--compare-config;-f" usage:"Path to compare configuration file (YAML/JSON)"`
@@ -460,11 +461,13 @@ func runMockServer(args *Args) error {
 			serverConfig.Port = args.MockPort
 		}
 		serverConfig.Routes = config.Routes
+		serverConfig.EnableLogging = args.MockLog
 	} else {
 		// 使用命令行参数
 		serverConfig.Port = args.MockPort
 		serverConfig.StatusCode = args.MockStatusCode
 		serverConfig.Response = args.MockResponse
+		serverConfig.EnableLogging = args.MockLog
 
 		// 解析延迟
 		if args.MockDelay != "" {
@@ -503,7 +506,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelError})))
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})))
 
 	// 检查是否启动 Mock 服务器
 	if args.MockServer {

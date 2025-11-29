@@ -16,7 +16,7 @@ var Logger *log.Logger
 
 func init() {
 	// Initialize with default stderr logger
-	Logger = log.New(os.Stderr, "[gurl-mcp] ", log.LstdFlags|log.Lshortfile)
+	// Logger = log.New(os.Stderr, "[gurl-mcp] ", log.LstdFlags|log.Lshortfile)
 }
 
 // InitLogger initializes the logger with optional debug log file

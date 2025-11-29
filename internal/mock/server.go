@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -16,6 +16,8 @@ type ServerConfig struct {
 	Response   string
 	StatusCode int
 	Routes     []RouteConfig
+	// EnableLogging controls whether per-request logs are printed
+	EnableLogging bool
 }
 
 // RouteConfig defines a single route configuration
@@ -72,8 +74,8 @@ func (s *Server) Start() error {
 		Handler: mux,
 	}
 
-	log.Printf("Mock server starting on http://localhost:%d\n", s.config.Port)
-	log.Printf("Press Ctrl+C to stop\n")
+	slog.Info("Mock server starting", "addr", fmt.Sprintf("http://localhost:%d", s.config.Port))
+	slog.Info("Press Ctrl+C to stop")
 
 	return s.server.ListenAndServe()
 }
@@ -81,6 +83,7 @@ func (s *Server) Start() error {
 // registerRoute registers all routes for a specific path
 func (s *Server) registerRoute(mux *http.ServeMux, path string, routes []RouteConfig) {
 	mux.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("Received request: %s %s\n", r.Method, r.URL.Path)
 		for _, route := range routes {
 			// 如果配置了 Method，则需要精确匹配；未配置则匹配所有方法
 			if route.Method != "" && r.Method != route.Method {
@@ -95,7 +98,9 @@ func (s *Server) registerRoute(mux *http.ServeMux, path string, routes []RouteCo
 	})
 
 	for _, route := range routes {
-		log.Printf("Registered route: %s %s", route.Method, path)
+		if s.config.EnableLogging {
+			slog.Info("Registered route", "method", route.Method, "path", path)
+		}
 	}
 }
 
@@ -123,7 +128,9 @@ func (s *Server) createRouteHandler(route RouteConfig) http.HandlerFunc {
 		}
 
 		// 记录请求
-		log.Printf("%s %s - Status: %d, Delay: %v", r.Method, r.URL.Path, statusCode, delay)
+		if s.config.EnableLogging {
+			slog.Info("Request handled", "method", r.Method, "path", r.URL.Path, "status", statusCode, "delay", delay)
+		}
 
 		w.WriteHeader(statusCode)
 
@@ -137,7 +144,7 @@ func (s *Server) createRouteHandler(route RouteConfig) http.HandlerFunc {
 		if route.Response != "" {
 			w.Header().Set("Content-Type", "application/json")
 			if _, err := fmt.Fprint(w, route.Response); err != nil {
-				log.Printf("Error writing response: %v", err)
+				slog.Error("Error writing response", "err", err)
 			}
 			return
 		}
@@ -155,7 +162,9 @@ func (s *Server) defaultHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 记录请求
-	log.Printf("%s %s - Status: %d, Delay: %v", r.Method, r.URL.Path, s.config.StatusCode, s.config.Delay)
+	if s.config.EnableLogging {
+		slog.Info("Request handled", "method", r.Method, "path", r.URL.Path, "status", s.config.StatusCode, "delay", s.config.Delay)
+	}
 
 	w.WriteHeader(s.config.StatusCode)
 
@@ -163,7 +172,7 @@ func (s *Server) defaultHandler(w http.ResponseWriter, r *http.Request) {
 	if s.config.Response != "" {
 		w.Header().Set("Content-Type", "application/json")
 		if _, err := fmt.Fprint(w, s.config.Response); err != nil {
-			log.Printf("Error writing response: %v", err)
+			slog.Error("Error writing response", "err", err)
 		}
 		return
 	}
@@ -180,7 +189,7 @@ func (s *Server) echoRequest(w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
 	defer func() {
 		if err := r.Body.Close(); err != nil {
-			log.Printf("Error closing request body: %v", err)
+			slog.Error("Error closing request body", "err", err)
 		}
 	}()
 
@@ -194,7 +203,7 @@ func (s *Server) echoRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Printf("Error encoding response: %v", err)
+		slog.Error("Error encoding response", "err", err)
 	}
 }
 
@@ -210,7 +219,7 @@ func (s *Server) defaultResponse(w http.ResponseWriter, r *http.Request, statusC
 	}
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Printf("Error encoding response: %v", err)
+		slog.Error("Error encoding response", "err", err)
 	}
 }
 
