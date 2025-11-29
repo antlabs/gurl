@@ -19,6 +19,7 @@ import (
 	"github.com/antlabs/gurl/internal/config"
 	"github.com/antlabs/gurl/internal/mcp"
 	"github.com/antlabs/gurl/internal/mock"
+	"github.com/antlabs/gurl/internal/notify"
 	"github.com/antlabs/gurl/internal/parser"
 	"github.com/antlabs/gurl/internal/scheduler"
 	"github.com/antlabs/gurl/internal/template"
@@ -430,17 +431,29 @@ func runBatchTest(args *Args) error {
 	reporter := batch.NewReporter(args.Verbose)
 
 	// 根据输出格式生成报告
+	var textReport string
 	switch args.BatchReport {
 	case "csv":
-		fmt.Print(reporter.GenerateCSVReport(result))
+		textReport = reporter.GenerateCSVReport(result)
 	case "json":
-		fmt.Print(reporter.GenerateJSONReport(result))
+		textReport = reporter.GenerateJSONReport(result)
 	default: // "text"
-		fmt.Print(reporter.GenerateReport(result))
+		textReport = reporter.GenerateReport(result)
 	}
+	fmt.Print(textReport)
 
 	// 打印简要摘要
 	reporter.PrintSummary(result)
+
+	// 统一批量通知（如飞书），避免每个断言单独发送
+	if batchConfig.Notifier != nil {
+		n := notify.NewFromConfig(batchConfig.Notifier)
+		if n != nil {
+			if err := n.NotifyBatch(result, textReport); err != nil && args.Verbose {
+				fmt.Fprintf(os.Stderr, "batch notifier error: %v\n", err)
+			}
+		}
+	}
 
 	return nil
 }

@@ -13,8 +13,18 @@ import (
 
 // BatchConfig represents the batch test configuration
 type BatchConfig struct {
-	Version string      `yaml:"version" json:"version"`
-	Tests   []BatchTest `yaml:"tests" json:"tests"`
+	Version  string          `yaml:"version" json:"version"`
+	Tests    []BatchTest     `yaml:"tests" json:"tests"`
+	Notifier *NotifierConfig `yaml:"notifier,omitempty" json:"notifier,omitempty"`
+}
+
+// NotifierConfig defines configuration for batch result notifications.
+type NotifierConfig struct {
+	Type          string `yaml:"type" json:"type"`
+	Enabled       bool   `yaml:"enabled" json:"enabled"`
+	OnlyOnFail    bool   `yaml:"only_on_fail" json:"only_on_fail"`
+	FeishuWebhook string `yaml:"feishu_webhook" json:"feishu_webhook"`
+	Title         string `yaml:"title" json:"title"`
 }
 
 // BatchTest represents a single test in the batch
