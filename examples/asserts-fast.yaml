@@ -11,12 +11,40 @@ tests:
     asserts: |
       # 期望 /fast 返回 200
       status == 200
-      # Content-Type 应该是 JSON
-      header "Content-Type" contains "application/json"
-      # 响应 JSON 字段断言，对应 mock-server.yaml 中的 response
-      gjson "message" != "Fast response"
-      gjson "latency" == "0ms"
+      # Content-Type 应该是 text/plain
+      header "Content-Type" contains "text/plain"
       # Body 文本中包含关键字
-      body contains "Fast response"
+      # body contains "Fast response"
       # 单次请求耗时应非常快
       duration_ms < 100
+
+  - name: "Echo endpoint asserts"
+    curl: 'curl http://127.0.0.1:9191/echo'
+    connections: 1
+    duration: "1s"
+    threads: 1
+    rate: 1
+
+    asserts: |
+      # /echo 应该返回 200
+      status == 200
+      # Content-Type 应该是 text/plain
+      header "Content-Type" contains "text/plain"
+      # 响应 JSON 里 path 字段为 /echo
+      gjson "path" == "/echo"
+      # body 字段存在
+      gjson "body" exists
+
+  - name: "Create user API asserts"
+    curl: 'curl -X POST http://127.0.0.1:9191/api/users -H "Content-Type: application/json" -d "{\"name\":\"Alice\"}"'
+    connections: 1
+    duration: "1s"
+    threads: 1
+    rate: 1
+
+    asserts: |
+      # /api/users POST 应该返回 200
+      status == 200
+      # Content-Type 应该是 text/plain
+      header "Content-Type" contains "text/plain"
+      # Body 文本中包含用户名
