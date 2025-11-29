@@ -244,99 +244,60 @@ func runBenchmark(args *Args) error {
 }
 
 func runBenchmarkWithCron(args *Args) error {
-	cronExpr, err := scheduler.ParseDailyCron(args.ScheduleCron)
-	if err != nil {
-		return err
-	}
-
+	stop := make(chan struct{})
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	defer signal.Stop(sigChan)
 
-	for {
-		now := time.Now()
-		next := cronExpr.NextAfter(now)
-		sleepDuration := next.Sub(now)
-		fmt.Printf("Next scheduled run at %s\n", next.Format(time.RFC3339))
-		timer := time.NewTimer(sleepDuration)
-		select {
-		case <-timer.C:
-			fmt.Printf("Starting scheduled run at %s\n", time.Now().Format(time.RFC3339))
-			if err := runBenchmark(args); err != nil {
-				fmt.Fprintf(os.Stderr, "Scheduled run error: %v\n", err)
-			}
-		case <-sigChan:
-			if !timer.Stop() {
-				<-timer.C
-			}
-			fmt.Println("\nReceived interrupt signal, stopping scheduled runs...")
-			return nil
+	go func() {
+		<-sigChan
+		fmt.Println("\nReceived interrupt signal, stopping scheduled benchmark runs...")
+		close(stop)
+	}()
+
+	return scheduler.Run(args.ScheduleCron, func() {
+		if err := runBenchmark(args); err != nil {
+			fmt.Fprintf(os.Stderr, "Scheduled run error: %v\n", err)
 		}
-	}
+	}, stop)
 }
 
 func runBatchTestWithCron(args *Args) error {
-	cronExpr, err := scheduler.ParseDailyCron(args.ScheduleCron)
-	if err != nil {
-		return err
-	}
-
+	stop := make(chan struct{})
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	defer signal.Stop(sigChan)
 
-	for {
-		now := time.Now()
-		next := cronExpr.NextAfter(now)
-		sleepDuration := next.Sub(now)
-		fmt.Printf("Next scheduled batch run at %s\n", next.Format(time.RFC3339))
-		timer := time.NewTimer(sleepDuration)
-		select {
-		case <-timer.C:
-			fmt.Printf("Starting scheduled batch run at %s\n", time.Now().Format(time.RFC3339))
-			if err := runBatchTest(args); err != nil {
-				fmt.Fprintf(os.Stderr, "Scheduled batch run error: %v\n", err)
-			}
-		case <-sigChan:
-			if !timer.Stop() {
-				<-timer.C
-			}
-			fmt.Println("\nReceived interrupt signal, stopping scheduled batch runs...")
-			return nil
+	go func() {
+		<-sigChan
+		fmt.Println("\nReceived interrupt signal, stopping scheduled batch runs...")
+		close(stop)
+	}()
+
+	return scheduler.Run(args.ScheduleCron, func() {
+		if err := runBatchTest(args); err != nil {
+			fmt.Fprintf(os.Stderr, "Scheduled batch run error: %v\n", err)
 		}
-	}
+	}, stop)
 }
 
 func runCompareWithCron(args *Args) error {
-	cronExpr, err := scheduler.ParseDailyCron(args.ScheduleCron)
-	if err != nil {
-		return err
-	}
-
+	stop := make(chan struct{})
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	defer signal.Stop(sigChan)
 
-	for {
-		now := time.Now()
-		next := cronExpr.NextAfter(now)
-		sleepDuration := next.Sub(now)
-		fmt.Printf("Next scheduled compare run at %s\n", next.Format(time.RFC3339))
-		timer := time.NewTimer(sleepDuration)
-		select {
-		case <-timer.C:
-			fmt.Printf("Starting scheduled compare run at %s\n", time.Now().Format(time.RFC3339))
-			if err := runCompare(args); err != nil {
-				fmt.Fprintf(os.Stderr, "Scheduled compare run error: %v\n", err)
-			}
-		case <-sigChan:
-			if !timer.Stop() {
-				<-timer.C
-			}
-			fmt.Println("\nReceived interrupt signal, stopping scheduled compare runs...")
-			return nil
+	go func() {
+		<-sigChan
+		fmt.Println("\nReceived interrupt signal, stopping scheduled compare runs...")
+		close(stop)
+	}()
+
+	return scheduler.Run(args.ScheduleCron, func() {
+		if err := runCompare(args); err != nil {
+			fmt.Fprintf(os.Stderr, "Scheduled compare run error: %v\n", err)
 		}
-	}
+	}, stop)
 }
 
 // runCompare 执行 compare 模式（一对一场景）

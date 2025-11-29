@@ -3,6 +3,7 @@ module github.com/antlabs/gurl
 go 1.24.1
 
 require (
+	github.com/antlabs/cronex v0.0.5
 	github.com/antlabs/httparser v0.0.11
 	github.com/antlabs/pcurl v0.0.11
 	github.com/antlabs/pulse v0.0.0-20250727044511-e31dbf68d422
@@ -18,8 +19,10 @@ require (
 require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/antlabs/gstl v0.0.7 // indirect
+	github.com/antlabs/stl v0.0.2 // indirect
 	github.com/antlabs/strsim v0.0.2 // indirect
 	github.com/antlabs/task v0.0.0-20250706071410-2137462668b9 // indirect
+	github.com/antlabs/timer v0.1.4 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect

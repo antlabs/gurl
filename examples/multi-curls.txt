@@ -2,13 +2,13 @@
 # Lines starting with # are comments
 
 # GET request to users endpoint
-curl https://httpbin.org/get
+curl http://127.0.0.1:9191/echo
 
 # POST request with JSON data
-curl -X POST https://httpbin.org/post -H "Content-Type: application/json" -d '{"test":"data"}'
+curl -X POST http://127.0.0.1:9191/api/users -H "Content-Type: application/json" -d '{"test":"data"}'
 
 # GET with custom headers
-curl -H "User-Agent: gurl-test" https://httpbin.org/headers
+curl -H "User-Agent: gurl-test" http://127.0.0.1:9191/fast
 
 # Delay endpoint
-curl https://httpbin.org/delay/1
+curl http://127.0.0.1:9191/slow
