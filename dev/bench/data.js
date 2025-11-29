@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764259809630,
+  "lastUpdate": 1764406043714,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -1872,6 +1872,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "14865758 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "f1da0cd32938ccd9593f1fd4b5ea61ccfe746a9b",
+          "message": "feat: add --mock-log flag to control mock server request logging\n\n- Added --mock-log flag to enable/disable request logging in mock server\n- Changed default slog level from Error to Info in main function\n- Replaced log.Printf with slog structured logging (Info/Error) in mock server\n- Added EnableLogging field to ServerConfig to control per-request log output\n- Wrapped route registration and request handling logs with EnableLogging check\n- Commented out default mcp logger initialization to reduce",
+          "timestamp": "2025-11-29T16:46:33+08:00",
+          "tree_id": "ba267e86c9148198a8209884617ff5896b3c9a91",
+          "url": "https://github.com/antlabs/gurl/commit/f1da0cd32938ccd9593f1fd4b5ea61ccfe746a9b"
+        },
+        "date": 1764406043423,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100075146,
+            "unit": "ns/op\t 5046874 B/op\t   62215 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100075146,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 5046874,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 62215,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 407.8,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "14841092 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 407.8,
+            "unit": "ns/op",
+            "extra": "14841092 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "14841092 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "14841092 times\n4 procs"
           }
         ]
       }
