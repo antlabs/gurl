@@ -10,7 +10,7 @@ require (
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/google/uuid v1.6.0
 	github.com/guonaihong/clop v0.2.12
-	github.com/mark3labs/mcp-go v0.43.1
+	github.com/mark3labs/mcp-go v0.43.2
 	github.com/tidwall/gjson v1.18.0
 	go.uber.org/ratelimit v0.3.1
 	gopkg.in/yaml.v3 v3.0.1
