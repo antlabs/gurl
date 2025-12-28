@@ -16,6 +16,7 @@ type BatchConfig struct {
 	Version  string          `yaml:"version" json:"version"`
 	Tests    []BatchTest     `yaml:"tests" json:"tests"`
 	Notifier *NotifierConfig `yaml:"notifier,omitempty" json:"notifier,omitempty"`
+	JSONDiff *JSONDiffConfig `yaml:"jsondiff,omitempty" json:"jsondiff,omitempty"`
 }
 
 // NotifierConfig defines configuration for batch result notifications.
@@ -27,19 +28,37 @@ type NotifierConfig struct {
 	Title         string `yaml:"title" json:"title"`
 }
 
+// JSONDiffConfig defines configuration for JSON response comparison
+type JSONDiffConfig struct {
+	Pairs []JSONDiffPair `yaml:"pairs" json:"pairs"`
+}
+
+// JSONDiffPair represents a pair of tests to compare
+type JSONDiffPair struct {
+	Name         string   `yaml:"name,omitempty" json:"name,omitempty"`
+	Base         string   `yaml:"base" json:"base"`
+	Target       string   `yaml:"target" json:"target"`
+	CompareField string   `yaml:"compare_field,omitempty" json:"compare_field,omitempty"`
+	BaseField    string   `yaml:"base_field,omitempty" json:"base_field,omitempty"`
+	TargetField  string   `yaml:"target_field,omitempty" json:"target_field,omitempty"`
+	IgnoreFields []string `yaml:"ignore_fields,omitempty" json:"ignore_fields,omitempty"`
+}
+
 // BatchTest represents a single test in the batch
 type BatchTest struct {
-	Name        string `yaml:"name" json:"name"`
-	Curl        string `yaml:"curl" json:"curl"`
-	Connections int    `yaml:"connections,omitempty" json:"connections,omitempty"`
-	Duration    string `yaml:"duration,omitempty" json:"duration,omitempty"`
-	Threads     int    `yaml:"threads,omitempty" json:"threads,omitempty"`
-	Rate        int    `yaml:"rate,omitempty" json:"rate,omitempty"`
-	Timeout     string `yaml:"timeout,omitempty" json:"timeout,omitempty"`
-	Verbose     bool   `yaml:"verbose,omitempty" json:"verbose,omitempty"`
-	UseNetHTTP  bool   `yaml:"use_nethttp,omitempty" json:"use_nethttp,omitempty"`
-	Asserts     string `yaml:"asserts,omitempty" json:"asserts,omitempty"`
-	Requests    int64  `yaml:"requests,omitempty" json:"requests,omitempty"`
+	Name               string `yaml:"name" json:"name"`
+	Curl               string `yaml:"curl" json:"curl"`
+	Connections        int    `yaml:"connections,omitempty" json:"connections,omitempty"`
+	Duration           string `yaml:"duration,omitempty" json:"duration,omitempty"`
+	Threads            int    `yaml:"threads,omitempty" json:"threads,omitempty"`
+	Rate               int    `yaml:"rate,omitempty" json:"rate,omitempty"`
+	Timeout            string `yaml:"timeout,omitempty" json:"timeout,omitempty"`
+	Verbose            bool   `yaml:"verbose,omitempty" json:"verbose,omitempty"`
+	UseNetHTTP         bool   `yaml:"use_nethttp,omitempty" json:"use_nethttp,omitempty"`
+	Asserts            string `yaml:"asserts,omitempty" json:"asserts,omitempty"`
+	Requests           int64  `yaml:"requests,omitempty" json:"requests,omitempty"`
+	OutputFile         string `yaml:"output_file,omitempty" json:"output_file,omitempty"`
+	OutputResponseOnly bool   `yaml:"output_response_only,omitempty" json:"output_response_only,omitempty"`
 }
 
 // ToConfig converts BatchTest to Config with defaults

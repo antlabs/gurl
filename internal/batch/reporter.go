@@ -155,6 +155,50 @@ func (r *Reporter) GenerateReport(result *BatchResult) string {
 		report.WriteString("\n")
 	}
 
+	// JSONDiff Results
+	if len(result.JSONDiffResults) > 0 {
+		report.WriteString("=== JSON Diff Results ===\n\n")
+
+		passedCount := 0
+		failedCount := 0
+
+		for _, diffResult := range result.JSONDiffResults {
+			if diffResult.Passed {
+				passedCount++
+			} else {
+				failedCount++
+			}
+
+			status := "PASSED"
+			if !diffResult.Passed {
+				status = "FAILED"
+			}
+
+			report.WriteString(fmt.Sprintf("Comparison: %s\n", diffResult.PairName))
+			report.WriteString(fmt.Sprintf("  Base: %s\n", diffResult.BaseName))
+			report.WriteString(fmt.Sprintf("  Target: %s\n", diffResult.TargetName))
+			report.WriteString(fmt.Sprintf("  Status: %s\n", status))
+			report.WriteString(fmt.Sprintf("  Message: %s\n", diffResult.Message))
+
+			if !diffResult.Passed && len(diffResult.Differences) > 0 {
+				report.WriteString("  Differences:\n")
+				maxDiffs := 10
+				for i, diff := range diffResult.Differences {
+					if i >= maxDiffs {
+						report.WriteString(fmt.Sprintf("    ... and %d more differences\n", len(diffResult.Differences)-maxDiffs))
+						break
+					}
+					report.WriteString(fmt.Sprintf("    - Field: %s\n", diff.Field))
+					report.WriteString(fmt.Sprintf("      Base:   %s\n", diff.BaseValue))
+					report.WriteString(fmt.Sprintf("      Target: %s\n", diff.TargetValue))
+				}
+			}
+			report.WriteString("\n")
+		}
+
+		report.WriteString(fmt.Sprintf("JSONDiff Summary: %d passed, %d failed\n\n", passedCount, failedCount))
+	}
+
 	return report.String()
 }
 

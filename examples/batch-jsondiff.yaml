@@ -1,0 +1,31 @@
+version: "1.0"
+tests:
+  - name: "A版本-用户登录"
+    curl: 'curl -X POST https://httpbin.org/post -H "Content-Type: application/json" -d "{\"username\":\"test\",\"password\":\"123456\",\"version\":\"v1\"}"'
+    connections: 10
+    duration: "5s"
+    
+  - name: "B版本-用户登录"
+    curl: 'curl -X POST https://httpbin.org/post -H "Content-Type: application/json" -d "{\"username\":\"test\",\"password\":\"123456\",\"version\":\"v2\"}"'
+    connections: 10
+    duration: "5s"
+
+# JSON响应对比配置
+jsondiff:
+  pairs:
+    # 示例1: 对比整个响应体
+    - name: "登录接口完整对比"
+      base: "A版本-用户登录"
+      target: "B版本-用户登录"
+      # 不指定compare_field，对比整个响应
+      ignore_fields:
+        - "headers.X-Amzn-Trace-Id"  # 忽略动态的trace ID
+        - "origin"                    # 忽略来源IP
+    
+    # 示例2: 只对比data字段（最常用）
+    - name: "登录接口data字段对比"
+      base: "A版本-用户登录"
+      target: "B版本-用户登录"
+      compare_field: "json"  # httpbin返回的JSON在json字段中
+      ignore_fields:
+        - "version"  # 忽略版本字段的差异

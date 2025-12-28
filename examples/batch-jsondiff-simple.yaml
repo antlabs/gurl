@@ -1,0 +1,17 @@
+version: "1.0"
+tests:
+  - name: "A版本-接口"
+    curl: 'curl https://httpbin.org/json'
+    connections: 10
+    duration: "5s"
+    
+  - name: "B版本-接口"
+    curl: 'curl https://httpbin.org/json'
+    connections: 10
+    duration: "5s"
+
+jsondiff:
+  pairs:
+    - base: "A版本-接口"
+      target: "B版本-接口"
+      compare_field: "slideshow"  # 只对比slideshow字段

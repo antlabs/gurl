@@ -1,0 +1,38 @@
+version: "1.0"
+tests:
+  # 老版本接口 - 使用 result 字段
+  - name: "老版本-获取地区156"
+    curl: 'curl -X POST https://httpbin.org/post -H "Content-Type: application/json" -d "{\"result\":{\"region\":\"Beijing\",\"code\":\"156\",\"name\":\"China\"}}"'
+    connections: 1
+    threads: 1
+    requests: 1
+    
+  # 新版本接口 - 使用 data 字段
+  - name: "新版本-获取地区156"
+    curl: 'curl -X POST https://httpbin.org/post -H "Content-Type: application/json" -d "{\"data\":{\"region\":\"Beijing\",\"code\":\"156\",\"name\":\"China\"}}"'
+    connections: 1
+    threads: 1
+    requests: 1
+
+# JSON响应对比配置 - 对比不同字段路径
+jsondiff:
+  pairs:
+    # 场景1: 对比老版本的 result 和新版本的 data
+    - name: "获取地址接口A/B对比"
+      base: "老版本-获取地区156"
+      target: "新版本-获取地区156"
+      base_field: "json.result"      # 老版本从 result 提取（httpbin将请求体放在json字段）
+      target_field: "json.data"      # 新版本从 data 提取
+      ignore_fields:
+        - "timestamp"
+        - "request_id"
+    
+    # 场景2: 对比整个响应（不指定字段）
+    - name: "完整响应对比"
+      base: "老版本-获取地区156"
+      target: "新版本-获取地区156"
+      # 不指定 base_field 和 target_field，对比整个响应
+      ignore_fields:
+        - "headers"
+        - "origin"
+        - "url"
