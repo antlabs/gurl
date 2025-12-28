@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1764407244404,
+  "lastUpdate": 1766925034141,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -2088,6 +2088,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "14886318 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "2da10f6edb891a3f261dec2536f9858b18072560",
+          "message": "Based on the repository's commit history style, here's the commit message:\n\n```\ndocs: add comprehensive JSONDiff feature design documentation\n\n- Added jsondiff-design.md with complete feature specification and usage guide\n- Documented jsondiff configuration structure with pairs, base/target, and field comparison\n- Added support for compare_field, base_field, target_field, and ignore_fields options\n- Included 5 usage scenarios: data-only comparison, code-msg-data structure, nested fields, batch comparison",
+          "timestamp": "2025-12-28T20:29:25+08:00",
+          "tree_id": "ef0a08ab2e3edb12d005936e963df4d142b92502",
+          "url": "https://github.com/antlabs/gurl/commit/2da10f6edb891a3f261dec2536f9858b18072560"
+        },
+        "date": 1766925033258,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100093334,
+            "unit": "ns/op\t 4781668 B/op\t   58969 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100093334,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 4781668,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 58969,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 419.3,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "14358745 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 419.3,
+            "unit": "ns/op",
+            "extra": "14358745 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "14358745 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "14358745 times\n4 procs"
           }
         ]
       }
