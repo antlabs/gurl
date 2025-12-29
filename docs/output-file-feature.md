@@ -30,6 +30,23 @@ tests:
     output_file: "results/test-b-result.json"  # 保存到此文件
 ```
 
+### 只保存响应体模式
+
+如果你只需要保存响应体内容，而不需要统计信息，可以使用 `output_response_only` 选项：
+
+```yaml
+version: "1.0"
+tests:
+  - name: "A版本-用户查询"
+    curl: 'curl -X POST https://api.example.com/user'
+    connections: 10
+    duration: "5s"
+    output_file: "results/response-a.json"
+    output_response_only: true  # 只保存响应体
+```
+
+这样文件中只会包含原始的 HTTP 响应体，不包含测试统计信息。
+
 ## 输出文件格式
 
 每个输出文件都是一个 JSON 格式的文件，包含以下信息：
@@ -64,7 +81,18 @@ tests:
 }
 ```
 
-## 字段说明
+## 配置字段说明
+
+### BatchTest 配置
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `output_file` | string | 否 | 输出文件路径 |
+| `output_response_only` | bool | 否 | 是否只保存响应体（默认 false，保存完整统计） |
+
+### 输出文件字段说明（完整模式）
+
+当 `output_response_only: false`（默认）时，输出文件包含以下字段：
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -76,6 +104,15 @@ tests:
 | `error` | string | 错误信息（仅在失败时存在） |
 | `statistics` | object | 测试统计信息 |
 | `sample_response` | string | 样本响应（用于 jsondiff） |
+
+### 输出文件内容（响应体模式）
+
+当 `output_response_only: true` 时，输出文件只包含原始的 HTTP 响应体内容，不包含任何统计信息或元数据。
+
+**JSON 自动格式化**：
+- 如果响应体是有效的 JSON 格式，会自动进行格式化（美化），使用 2 个空格缩进
+- 如果响应体不是 JSON 格式，则保存原始内容
+- 格式化后的 JSON 更易读，便于查看和对比
 
 ### statistics 对象
 
@@ -120,6 +157,54 @@ jsondiff:
 运行后，你将得到两个文件：
 - `results/version-a.json` - A 版本的测试结果
 - `results/version-b.json` - B 版本的测试结果
+
+### 场景 1.5：只保存响应体用于对比
+
+如果你只关心响应内容，不需要性能统计：
+
+```yaml
+version: "1.0"
+tests:
+  - name: "A版本-接口"
+    curl: 'curl https://api-v1.example.com/endpoint'
+    connections: 10
+    duration: "5s"
+    output_file: "results/response-a.json"
+    output_response_only: true  # 只保存响应体
+    
+  - name: "B版本-接口"
+    curl: 'curl https://api-v2.example.com/endpoint'
+    connections: 10
+    duration: "5s"
+    output_file: "results/response-b.json"
+    output_response_only: true  # 只保存响应体
+
+jsondiff:
+  pairs:
+    - base: "A版本-接口"
+      target: "B版本-接口"
+      compare_field: "data"
+```
+
+运行后，文件内容示例：
+
+**results/response-a.json**（只包含响应体）：
+```json
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "user_id": 123,
+    "username": "test"
+  }
+}
+```
+
+这种模式特别适合：
+- 用于 jsondiff 对比
+- 保存 API 响应快照
+- 调试接口返回内容
+- 不需要性能数据的场景
 
 ### 场景 2：多接口测试结果归档
 

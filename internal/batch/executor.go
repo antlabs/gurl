@@ -242,7 +242,21 @@ func (e *Executor) saveTestResultToFile(result *TestResult, filename string, res
 		if len(result.SampleResponse) == 0 {
 			return fmt.Errorf("no sample response available")
 		}
-		// Write raw response to file
+
+		// Try to format as JSON if it's valid JSON
+		var jsonData interface{}
+		if err := json.Unmarshal(result.SampleResponse, &jsonData); err == nil {
+			// It's valid JSON, format it with indentation
+			formattedJSON, err := json.MarshalIndent(jsonData, "", "  ")
+			if err == nil {
+				if err := os.WriteFile(filename, formattedJSON, 0644); err != nil {
+					return fmt.Errorf("failed to write file: %v", err)
+				}
+				return nil
+			}
+		}
+
+		// Not valid JSON or formatting failed, write raw response
 		if err := os.WriteFile(filename, result.SampleResponse, 0644); err != nil {
 			return fmt.Errorf("failed to write file: %v", err)
 		}

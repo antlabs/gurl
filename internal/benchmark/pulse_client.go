@@ -121,6 +121,115 @@ func NewPulseBenchmarkWithMultipleRequests(cfg config.Config, requests []*http.R
 	}
 }
 
+// pulseBenchmarkRunner pulse 基准测试的公共运行器
+// 封装了单请求和多请求模式的公共逻辑
+type pulseBenchmarkRunner struct {
+	config      config.Config
+	target      *url.URL
+	request     *http.Request // 单请求模式使用
+	requestPool *RequestPool  // 多请求模式使用
+}
+
+// Run 执行 pulse 基准测试的公共实现
+func (r *pulseBenchmarkRunner) Run(ctx context.Context) (*stats.Results, error) {
+	results := stats.NewResults()
+
+	startTime := time.Now()
+
+	// 创建测试上下文
+	testCtx, cancel := context.WithTimeout(ctx, r.config.Duration)
+	defer cancel()
+
+	var requestCount int64
+	var errorCount int64
+
+	// 创建 Uber 限流器（所有连接共享，与 NetHTTPBenchmark 行为一致）
+	var limiter ratelimit.Limiter
+	if r.config.Rate > 0 {
+		limiter = ratelimit.New(r.config.Rate)
+	}
+
+	// 创建 Live UI（如果启用）
+	var liveUI *LiveUI
+	var uiErr error
+	if r.config.LiveUI {
+		liveUI, uiErr = NewLiveUIWithTheme(r.config.Duration, r.config.UITheme)
+		if uiErr != nil {
+			// 如果 UI 初始化失败，继续运行但不显示 UI
+			r.config.LiveUI = false
+		} else {
+			defer liveUI.Close()
+		}
+	}
+
+	// 创建 pulse 客户端事件循环
+	loop := pulse.NewClientEventLoop(
+		testCtx,
+		pulse.WithTaskType(pulse.TaskTypeInEventLoop), // 在事件循环中处理任务
+		pulse.WithTriggerType(core.TriggerTypeLevel),
+		pulse.WithLogLevel(slog.LevelError), // 只显示错误日志，避免 INFO 日志干扰 UI 显示
+		pulse.WithCallback(&HTTPClientHandler{
+			request:      r.request,
+			requestPool:  r.requestPool,
+			requestCount: &requestCount,
+			errorCount:   &errorCount,
+			results:      results,
+			maxBodySize:  1 << 20, // 1MB 限制
+			rateLimiter:  limiter,
+			asserts:      r.config.Asserts,
+			maxRequests:  r.config.Requests,
+			cancel:       cancel,
+		}),
+	)
+
+	// 启动事件循环
+	go func() {
+		loop.Serve()
+	}()
+
+	// 建立连接
+	port := r.target.Port()
+	if port == "" {
+		if r.target.Scheme == "https" {
+			port = "443"
+		} else {
+			port = "80"
+		}
+	}
+
+	address := net.JoinHostPort(r.target.Hostname(), port)
+
+	// 启动采样 goroutine，每秒记录请求数和更新 UI（在连接建立之前启动）
+	samplingDone := StartSampling(testCtx, cancel, &requestCount, &errorCount, results, liveUI, nil, startTime)
+
+	// 创建多个连接（不输出日志，避免破坏 UI）
+	for i := 0; i < r.config.Connections; i++ {
+		conn, err := net.Dial("tcp", address)
+		if err != nil {
+			return nil, fmt.Errorf("failed to connect to %s: %w", address, err)
+		}
+
+		err = loop.RegisterConn(conn)
+		if err != nil {
+			return nil, fmt.Errorf("failed to register connection: %w", err)
+		}
+	}
+
+	// 等待测试时间结束
+	<-testCtx.Done()
+
+	// 等待采样完成
+	<-samplingDone
+
+	// 计算最终结果
+	results.TotalRequests = atomic.LoadInt64(&requestCount)
+	results.TotalErrors = atomic.LoadInt64(&errorCount)
+	// 使用实际运行时间，而不是配置的时间（支持提前中断）
+	results.Duration = time.Since(startTime)
+
+	return results, nil
+}
+
 // OnOpen 连接建立时的回调
 func (h *HTTPClientHandler) OnOpen(c *pulse.Conn) {
 	session := &ConnSession{
@@ -415,199 +524,22 @@ var httpParserSetting = httparser.Setting{
 
 // Run 执行pulse基准测试
 func (pb *PulseBenchmark) Run(ctx context.Context) (*stats.Results, error) {
-	results := stats.NewResults()
-
-	startTime := time.Now()
-
-	// 创建测试上下文
-	testCtx, cancel := context.WithTimeout(ctx, pb.config.Duration)
-	defer cancel()
-
-	var requestCount int64
-	var errorCount int64
-
-	// 创建 Uber 限流器（所有连接共享，与 NetHTTPBenchmark 行为一致）
-	var limiter ratelimit.Limiter
-	if pb.config.Rate > 0 {
-		limiter = ratelimit.New(pb.config.Rate)
+	runner := &pulseBenchmarkRunner{
+		config:      pb.config,
+		target:      pb.target,
+		request:     pb.request,
+		requestPool: nil, // 单请求模式
 	}
-
-	// 创建 Live UI（如果启用）
-	var liveUI *LiveUI
-	var uiErr error
-	if pb.config.LiveUI {
-		liveUI, uiErr = NewLiveUIWithTheme(pb.config.Duration, pb.config.UITheme)
-		if uiErr != nil {
-			// 如果 UI 初始化失败，继续运行但不显示 UI
-			pb.config.LiveUI = false
-		} else {
-			defer liveUI.Close()
-		}
-	}
-
-	// 创建 pulse 客户端事件循环
-	loop := pulse.NewClientEventLoop(
-		testCtx,
-		pulse.WithTaskType(pulse.TaskTypeInEventLoop), // 在事件循环中处理任务
-		pulse.WithTriggerType(core.TriggerTypeLevel),
-		pulse.WithLogLevel(slog.LevelError), // 只显示错误日志，避免INFO日志干扰UI显示
-		pulse.WithCallback(&HTTPClientHandler{
-			request:      pb.request,
-			requestPool:  nil,
-			requestCount: &requestCount,
-			errorCount:   &errorCount,
-			results:      results,
-			maxBodySize:  1 << 20, // 1MB限制
-			rateLimiter:  limiter,
-			asserts:      pb.config.Asserts,
-			maxRequests:  pb.config.Requests,
-			cancel:       cancel,
-		}),
-	)
-
-	// 启动事件循环
-	go func() {
-		loop.Serve()
-	}()
-
-	// 建立连接
-	port := pb.target.Port()
-	if port == "" {
-		if pb.target.Scheme == "https" {
-			port = "443"
-		} else {
-			port = "80"
-		}
-	}
-
-	address := net.JoinHostPort(pb.target.Hostname(), port)
-
-	// 启动采样 goroutine，每秒记录请求数和更新 UI（在连接建立之前启动）
-	samplingDone := StartSampling(testCtx, cancel, &requestCount, &errorCount, results, liveUI, nil, startTime)
-
-	// 创建多个连接（不输出日志，避免破坏 UI）
-	for i := 0; i < pb.config.Connections; i++ {
-		conn, err := net.Dial("tcp", address)
-		if err != nil {
-			return nil, fmt.Errorf("failed to connect to %s: %w", address, err)
-		}
-
-		err = loop.RegisterConn(conn)
-		if err != nil {
-			return nil, fmt.Errorf("failed to register connection: %w", err)
-		}
-	}
-
-	// 等待测试时间结束
-	<-testCtx.Done()
-
-	// 等待采样完成
-	<-samplingDone
-
-	// 计算最终结果
-	results.TotalRequests = atomic.LoadInt64(&requestCount)
-	results.TotalErrors = atomic.LoadInt64(&errorCount)
-	// 使用实际运行时间，而不是配置的时间（支持提前中断）
-	results.Duration = time.Since(startTime)
-
-	return results, nil
+	return runner.Run(ctx)
 }
 
 // Run 执行 pulse 多请求基准测试
 func (pb *PulseBenchmarkMulti) Run(ctx context.Context) (*stats.Results, error) {
-	results := stats.NewResults()
-
-	startTime := time.Now()
-
-	// 创建测试上下文
-	testCtx, cancel := context.WithTimeout(ctx, pb.config.Duration)
-	defer cancel()
-
-	var requestCount int64
-	var errorCount int64
-
-	// 创建 Uber 限流器（所有连接共享，与 NetHTTPBenchmark 行为一致）
-	var limiter ratelimit.Limiter
-	if pb.config.Rate > 0 {
-		limiter = ratelimit.New(pb.config.Rate)
+	runner := &pulseBenchmarkRunner{
+		config:      pb.config,
+		target:      pb.target,
+		request:     nil,         // 多请求模式不使用单个请求
+		requestPool: pb.requestPool,
 	}
-
-	// 创建 Live UI（如果启用）
-	var liveUI *LiveUI
-	var uiErr error
-	if pb.config.LiveUI {
-		liveUI, uiErr = NewLiveUIWithTheme(pb.config.Duration, pb.config.UITheme)
-		if uiErr != nil {
-			// 如果 UI 初始化失败，继续运行但不显示 UI
-			pb.config.LiveUI = false
-		} else {
-			defer liveUI.Close()
-		}
-	}
-
-	// 创建 pulse 客户端事件循环
-	loop := pulse.NewClientEventLoop(
-		testCtx,
-		pulse.WithTaskType(pulse.TaskTypeInEventLoop), // 在事件循环中处理任务
-		pulse.WithTriggerType(core.TriggerTypeLevel),
-		pulse.WithLogLevel(slog.LevelError), // 只显示错误日志，避免 INFO 日志干扰 UI 显示
-		pulse.WithCallback(&HTTPClientHandler{
-			request:      nil,
-			requestPool:  pb.requestPool,
-			requestCount: &requestCount,
-			errorCount:   &errorCount,
-			results:      results,
-			maxBodySize:  1 << 20, // 1MB 限制
-			rateLimiter:  limiter,
-			asserts:      pb.config.Asserts,
-			maxRequests:  pb.config.Requests,
-			cancel:       cancel,
-		}),
-	)
-
-	// 启动事件循环
-	go func() {
-		loop.Serve()
-	}()
-
-	// 建立连接
-	port := pb.target.Port()
-	if port == "" {
-		if pb.target.Scheme == "https" {
-			port = "443"
-		} else {
-			port = "80"
-		}
-	}
-
-	address := net.JoinHostPort(pb.target.Hostname(), port)
-
-	// 启动采样 goroutine，每秒记录请求数和更新 UI（在连接建立之前启动）
-	samplingDone := StartSampling(testCtx, cancel, &requestCount, &errorCount, results, liveUI, nil, startTime)
-
-	// 创建多个连接（不输出日志，避免破坏 UI）
-	for i := 0; i < pb.config.Connections; i++ {
-		conn, err := net.Dial("tcp", address)
-		if err != nil {
-			return nil, fmt.Errorf("failed to connect to %s: %w", address, err)
-		}
-
-		if err := loop.RegisterConn(conn); err != nil {
-			return nil, fmt.Errorf("failed to register connection: %w", err)
-		}
-	}
-
-	// 等待测试时间结束
-	<-testCtx.Done()
-
-	// 等待采样完成
-	<-samplingDone
-
-	// 计算最终结果
-	results.TotalRequests = atomic.LoadInt64(&requestCount)
-	results.TotalErrors = atomic.LoadInt64(&errorCount)
-	// 使用实际运行时间，而不是配置的时间（支持提前中断）
-	results.Duration = time.Since(startTime)
-
-	return results, nil
+	return runner.Run(ctx)
 }
