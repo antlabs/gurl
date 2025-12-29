@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1766925034141,
+  "lastUpdate": 1767029402397,
   "repoUrl": "https://github.com/antlabs/gurl",
   "entries": {
     "Benchmark": [
@@ -2160,6 +2160,78 @@ window.BENCHMARK_DATA = {
             "value": 5,
             "unit": "allocs/op",
             "extra": "14358745 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "committer": {
+            "email": "guonaihong@qq.com",
+            "name": "guonaihong",
+            "username": "guonaihong"
+          },
+          "distinct": true,
+          "id": "93ffb0144e0a72a0135963c90144a6ef255393a2",
+          "message": "feat: add output_response_only option to save raw HTTP response bodies\n\n- Added output_response_only field to BatchTest config for response-only output mode\n- Implemented automatic JSON formatting with 2-space indentation for valid JSON responses\n- Refactored PulseBenchmark and PulseBenchmarkMulti to use shared pulseBenchmarkRunner\n- Added comprehensive documentation in output-file-feature.md with usage examples\n- Created batch-response-only.yaml example demonstrating response-only vs full stats",
+          "timestamp": "2025-12-30T01:28:45+08:00",
+          "tree_id": "a33f4896de5a0fbb029340451ee533cf75ae1d14",
+          "url": "https://github.com/antlabs/gurl/commit/93ffb0144e0a72a0135963c90144a6ef255393a2"
+        },
+        "date": 1767029401539,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNetHTTPClient",
+            "value": 100063635,
+            "unit": "ns/op\t 5102671 B/op\t   62926 allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - ns/op",
+            "value": 100063635,
+            "unit": "ns/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - B/op",
+            "value": 5102671,
+            "unit": "B/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNetHTTPClient - allocs/op",
+            "value": 62926,
+            "unit": "allocs/op",
+            "extra": "58 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing",
+            "value": 400.7,
+            "unit": "ns/op\t     880 B/op\t       5 allocs/op",
+            "extra": "15086606 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - ns/op",
+            "value": 400.7,
+            "unit": "ns/op",
+            "extra": "15086606 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - B/op",
+            "value": 880,
+            "unit": "B/op",
+            "extra": "15086606 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHTTPRequestParsing - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "15086606 times\n4 procs"
           }
         ]
       }
